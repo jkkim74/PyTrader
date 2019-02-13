@@ -14,6 +14,39 @@ class Kiwoom(QAxWidget):
         self._create_kiwoom_instance()
         self._set_signal_slots()
 
+    @staticmethod
+    def change_format(data):
+        strip_data = data.lstrip('-0')
+        if strip_data == '':
+            strip_data = '0'
+        try:
+            format_data = format(int(strip_data), ',d')
+        except ValueError:
+            format_data = format(float(strip_data))
+        if data.startswith('-'):
+            format_data = '-' + format_data
+
+        return format_data
+
+    @staticmethod
+    def change_format2(data):
+        strip_data = data.lstrip('-0')
+
+        if strip_data == '':
+            strip_data = '0'
+
+        if strip_data.startswith('.'):
+            strip_data = '0' + strip_data
+
+        if data.startswith('-'):
+            strip_data = '-' + strip_data
+
+        return strip_data
+
+    def get_server_gubun(self):
+        ret = self.dynamicCall("KOA_Functions(QString, QString)", "GetServerGubun", "")
+        return ret
+
     def _create_kiwoom_instance(self):
         self.setControl("KHOPENAPI.KHOpenAPICtrl.1")
 
@@ -73,6 +106,10 @@ class Kiwoom(QAxWidget):
 
         if rqname == "opt10081_req":
             self._opt10081(rqname, trcode)
+        elif rqname == "opw00001_req":
+            self._opw00001(rqname, trcode)
+        elif rqname == "opw00018_req":
+            self._opw00018(rqname, trcode)
 
         try:
             self.tr_event_loop.exit()
@@ -97,6 +134,50 @@ class Kiwoom(QAxWidget):
             self.ohlcv['close'].append(int(close))
             self.ohlcv['volume'].append(int(volume))
 
+    def _opw00001(self, rqname, trcode):
+        self.d2_deposit = self._comm_get_data(trcode, "", rqname, 0, "d+2추정예수금")
+        self.d2_deposit = Kiwoom.change_format(self.d2_deposit)
+
+    def reset_opw00018_output(self):
+        self.opw00018_output = {'single': [], 'multi': []}
+
+    def _opw00018(self, rqname, trcode):
+        total_purchase_price = self._comm_get_data(trcode, "", rqname, 0, "총매입금액")
+        total_eval_price = self._comm_get_data(trcode, "", rqname, 0, "총평가금액")
+        total_eval_profit_loss_price = self._comm_get_data(trcode, "", rqname, 0, "총평가손익금액")
+        total_earning_rate = self._comm_get_data(trcode, '', rqname, 0, "총수익률(%)")
+        estimated_deposit = self._comm_get_data(trcode, '', rqname, 0, "추정예탁자산")
+
+        self.opw00018_output['single'].append(Kiwoom.change_format(total_purchase_price))
+        self.opw00018_output['single'].append(Kiwoom.change_format(total_eval_price))
+        self.opw00018_output['single'].append(Kiwoom.change_format(total_eval_profit_loss_price))
+
+        # _opw00018 메서드에서 모의투자일 때는 총수익률(%)의 값을 100으로 나눈 후 출력 되도록 다음과 같이 코드 수정.
+        # if self.get_server_gubun():
+        #     total_earning_rate = float(total_earning_rate) / 100
+        #     total_earning_rate = str(total_earning_rate)
+
+        self.opw00018_output['single'].append(Kiwoom.change_format(total_earning_rate))
+        self.opw00018_output['single'].append(Kiwoom.change_format(estimated_deposit))
+
+        # multi data
+        rows = self._get_repeat_cnt(trcode, rqname)
+        for i in range(rows):
+            name = self._comm_get_data(trcode, "", rqname, i, "종목명")
+            quantity = self._comm_get_data(trcode, "", rqname, i, "보유수량")
+            purchase_price = self._comm_get_data(trcode, "", rqname, i, "매입가")
+            current_price = self._comm_get_data(trcode, "", rqname, i, "현재가")
+            eval_profit_loss_price = self._comm_get_data(trcode, "", rqname, i, "평가손익")
+            earning_rate = self._comm_get_data(trcode, "", rqname, i, "수익률(%)")
+
+            quantity = Kiwoom.change_format(quantity)
+            purchase_price = Kiwoom.change_format(purchase_price)
+            current_price = Kiwoom.change_format(current_price)
+            eval_profit_loss_price = Kiwoom.change_format(eval_profit_loss_price)
+            earning_rate = Kiwoom.change_format2(earning_rate)
+
+            self.opw00018_output['multi'].append([name, quantity, purchase_price, current_price, eval_profit_loss_price, earning_rate])
+
     def get_chejan_data(self, fid):
         ret = self.dynamicCall("GetChejanData(int)", fid)
         return ret
@@ -116,3 +197,14 @@ class Kiwoom(QAxWidget):
         ret = self.dynamicCall("GetLoginInfo(QString)", tag)
         return ret
 
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    kiwoom = Kiwoom()
+    kiwoom.comm_connect()
+
+    account_number = kiwoom.get_login_info("ACCNO")
+    account_number = account_number.split(';')[0]
+
+    kiwoom.set_input_value("계좌번호", account_number)
+    kiwoom.comm_rq_data("opw00018_req", "opw00018", 0, "2000")
