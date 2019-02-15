@@ -196,8 +196,8 @@ class MyWindow(QMainWindow, form_class):
         name = self.kiwoom.get_master_code_name(code)
         # print(name, ",현재가 : ", self.kiwoom.cur_price)
         result = self.stratagy.isBuyStockAvailable(code, name, self.kiwoom.cur_price,self.kiwoom.open_price, s_year_date)
-        # return result
-        return True
+        return result
+        # return True
 
     def _file_update(self,fileName,code,pre_status,chg_status):
         stock_list = []
@@ -239,8 +239,8 @@ class MyWindow(QMainWindow, form_class):
                 if self.trade_buy_stratagic(code):  # * 매수전략 적용 *
                     buy_num_info = self.stratagy.get_buy_num_price(total_buy_money, self.kiwoom.high_price, self.kiwoom.cur_price)
                     num = buy_num_info[0]
-                    high_price = buy_num_info[1]
-                    print("매수수량 : ", num, " 매수상한가 : ", high_price)
+                    price = buy_num_info[1]
+                    print("매수수량 : ", num, " 매수상한가 : ", price)
                     self.kiwoom.send_order("send_order_req", "0101", account, 1, code, num, price, hoga_lookup[hoga], "") # 1: 매수, 2: 매도
                     self._file_update('buy_list.txt', code, '매수전', '주문완료')
 

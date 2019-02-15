@@ -188,7 +188,7 @@ class Kiwoom(QAxWidget):
             current_price = self._comm_get_data(trcode, "", rqname, i, "현재가")
             eval_profit_loss_price = self._comm_get_data(trcode, "", rqname, i, "평가손익")
             earning_rate = self._comm_get_data(trcode, "", rqname, i, "수익률(%)")
-            code = self._comm_get_data(trcode, "", rqname, i, "종목코드")
+            code = self._comm_get_data(trcode, "", rqname, i, "종목번호")[1:]
 
             quantity = Kiwoom.change_format(quantity)
             purchase_price = Kiwoom.change_format(purchase_price)
@@ -293,26 +293,33 @@ class Kiwoom(QAxWidget):
 
             # self.makeEtcJangoInfo(jongmok_code)
             # self.makeJangoInfoFile()
+            # 미체결수량이 0이고 매수인 경우, 확정매도 처리
+            if self.michegyeol_suryang == 0 and self.maedo_maesu_gubun == "2":
+                sysStatagy = SysStratagy()
+                sell_price = sysStatagy.get_maedo_price(self.maeip_danga)
+                sell_qty = self.boyou_suryang
+                self.add_stock_sell_info(self.jongmok_code, sell_price, sell_qty)
+
             pass
         elif (gubun == "0"):
             print('##################### : ', gubun)
-            jumun_sangtae = self.get_chejan_data(jk_util.name_fid['주문상태'])
+            self.jumun_sangtae = self.get_chejan_data(jk_util.name_fid['주문상태'])
             self.jongmok_code = self.get_chejan_data(jk_util.name_fid['종목코드'])[1:]
-            michegyeol_suryang = int(self.get_chejan_data(jk_util.name_fid['미체결수량']))
-            maedo_maesu_gubun = self.get_chejan_data(jk_util.name_fid['매도매수구분'])
-            if maedo_maesu_gubun == "1":
-                print('주문상태 : ', '매도', jumun_sangtae)
+            self.michegyeol_suryang = int(self.get_chejan_data(jk_util.name_fid['미체결수량']))
+            self.maedo_maesu_gubun = self.get_chejan_data(jk_util.name_fid['매도매수구분'])
+            if self.maedo_maesu_gubun == "1":
+                print('주문상태 : ', '매도', self.jumun_sangtae)
             else:
-                print('주문상태 : ', '매수', jumun_sangtae)
+                print('주문상태 : ', '매수', self.jumun_sangtae)
             print('종목코드 : ', self.jongmok_code)
-            print('미체결수량 : ', michegyeol_suryang)
+            print('미체결수량 : ', self.michegyeol_suryang)
             # 주문 상태
             # 매수 시 접수(gubun-0) - 체결(gubun-0) - 잔고(gubun-1)
             # 매도 시 접수(gubun-0) - 잔고(gubun-1) - 체결(gubun-0) - 잔고(gubun-1)   순임
             # 미체결 수량 정보를 입력하여 잔고 정보 처리시 미체결 수량 있는 경우에 대한 처리를 하도록 함
             if (self.jongmok_code not in self.michegyeolInfo):
                 self.michegyeolInfo[self.jongmok_code] = {}
-            self.michegyeolInfo[self.jongmok_code]['미체결수량'] = michegyeol_suryang
+            self.michegyeolInfo[self.jongmok_code]['미체결수량'] = self.michegyeol_suryang
 
             # if (jumun_sangtae == "체결"):
             #     self.makeChegyeolInfo(self.jongmok_code, fid_list)
@@ -321,18 +328,7 @@ class Kiwoom(QAxWidget):
 
             pass
 
-        if(len(self.michegyeolInfo) == 0):
-                pass
-        else:
-            print('미체결수량 : ', self.michegyeolInfo[self.jongmok_code]['미체결수량'])
-            # 미체결 수량이 0이면 체결이 완료된것이므로 확정매도 처리함.
-            if(self.michegyeolInfo[self.jongmok_code]['미체결수량'] == 0):
-                sysStatagy = SysStratagy()
-                sell_price = sysStatagy.get_maedo_price(self.maeip_danga)
-                sell_qty = self.boyou_suryang
-                self.add_stock_sell_info(self.jongmok_code, sell_price, sell_qty)
 
-                pass
 
     def add_stock_sell_info(self,code, sell_price, sell_qty):
         dm = ';'
