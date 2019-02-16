@@ -8,10 +8,13 @@ from datetime import datetime
 import pandas as pd
 SEL_CONDITION_NAME = '스캘퍼_시가갭'
 from SysStatagy import *
+buy_loc = 'stor/buy_list.txt'
+sell_loc = 'stor/sell_list.txt'
 class PyMon:
     def __init__(self):
         self.kiwoom = Kiwoom()
         self.kiwoom.comm_connect()
+        self.stratagy = SysStratagy()
 
     def run(self):
         # self.run_pbr_per_screener()
@@ -63,23 +66,30 @@ class PyMon:
         stock_state = self.kiwoom.get_master_stock_state(code)
         print(code_info, mste_info, stock_state)
 
-        f = open("sell_list.txt", 'rt', encoding='UTF-8')
+        f = open(sell_loc, 'rt', encoding='UTF-8')
         sell_list = f.readlines()
         f.close()
-        if len(sell_list) > 0:
-            write_mode = 'a' # 추가
-        else:
-            write_mode = 'wt'
 
-        for stock in sell_list:
-            if code in stock:
-                included = True
+        if self.stratagy.isTimeAvalable(self.kiwoom.maesu_start_time,self.kiwoom.maesu_end_time):
+            if len(sell_list) > 0:
+                write_mode = 'a' # 추가
             else:
-                included = False
+                write_mode = 'wt'
+
+            for stock in sell_list:
+                if code in stock:
+                    included = True
+                else:
+                    included = False
 
 
-        if included == False:
-            f = open("sell_list.txt", write_mode, encoding='UTF-8')
+            if included == False:
+                f = open(sell_loc, write_mode, encoding='UTF-8')
+                stock_info = b_gubun + dm + code + dm + b_method + dm + str(b_qty) + dm + str(b_price) + dm + b_status
+                f.write(stock_info + '\n')
+                f.close()
+        else:
+            f = open(sell_loc, 'wt', encoding='UTF-8')
             stock_info = b_gubun + dm + code + dm + b_method + dm + str(b_qty) + dm + str(b_price) + dm + b_status
             f.write(stock_info + '\n')
             f.close()
@@ -91,7 +101,7 @@ class PyMon:
         # print(self.kiwoom.condition_code_list[:-1])
         code_list = self.kiwoom.condition_code_list[:-1]
         print("조건검색결과 주식 : ", code_list, len(code_list))
-        f = open("buy_list.txt", 'wt', encoding='UTF-8')
+        f = open(buy_loc, 'wt', encoding='UTF-8')
         dm = ';'
         b_gubun = "매수"
         b_status = "매수전"

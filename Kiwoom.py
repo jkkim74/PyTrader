@@ -20,6 +20,8 @@ class Kiwoom(QAxWidget):
         self.michegyeolInfo = {}
         self.chegyeolInfo = {}  # { '날짜' : [ [ '주문구분', '매도', '주문/체결시간', '체결가' , '체결수량', '미체결수량'] ] }
         self.currentTime = datetime.now()
+        self.maesu_start_time = 90000
+        self.maesu_end_time = 180000
 
     @staticmethod
     def change_format(data):
@@ -348,8 +350,9 @@ class Kiwoom(QAxWidget):
         f.close()
 
     def send_order(self, rqname, screen_no, acc_no, order_type, code, quantity, price, hoga, order_no):
-        self.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
+        self.order_result = self.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
                          [rqname, screen_no, acc_no, order_type, code, quantity, price, hoga, order_no])
+        return self.order_result
 
     def get_login_info(self, tag):
         ret = self.dynamicCall("GetLoginInfo(QString)", tag)

@@ -11,10 +11,9 @@ if test_invest:
     total_buy_money = 10000000
 else:
     total_buy_money = 50000
-
-maesu_start_time = 90000
-maesu_end_time = 180000
 s_year_date = '2019-01-01';
+buy_loc = 'stor/buy_list.txt'
+sell_loc = 'stor/sell_list.txt'
 
 class MyWindow(QMainWindow, form_class):
     def __init__(self):
@@ -36,10 +35,13 @@ class MyWindow(QMainWindow, form_class):
         self.timer2 = QTimer(self)
         self.timer2.start(1000 * 10)
 
-        # Timer2
+        # Timer3
         self.timer3 = QTimer(self)
         self.timer3.start(1000 * 10)
 
+        # Timer4
+        self.timer4 = QTimer(self)
+        self.timer4.start(1000 * 4)
 
         # 계좌정보 넣어줌
         accouns_num = int(self.kiwoom.get_login_info("ACCOUNT_CNT"))
@@ -54,6 +56,7 @@ class MyWindow(QMainWindow, form_class):
         self.timer.timeout.connect(self.timeout)
         self.timer2.timeout.connect(self.timeout2)
         self.timer3.timeout.connect(self.timeout3)
+        self.timer4.timeout.connect(self.timeout4) # stop loss 처리
         self.lineEdit.textChanged.connect(self.code_changed)
         self.pushButton.clicked.connect(self.send_order)
         self.pushButton_2.clicked.connect(self.check_balance_Widget) # pushButton_2 라는 객체가 클릭될 때 check_balance라는 메서드가 호출
@@ -79,16 +82,22 @@ class MyWindow(QMainWindow, form_class):
 
     def timeout2(self):
         if self.checkBox.isChecked():
-            self.check_balance()
+            self.check_balance_Widget()
 
     def timeout3(self):
         if self.checkBox_2.isChecked():
             self.load_buy_sell_list()
 
+    def timeout4(self):
+        self.stock_stop_loss()
+
     def code_changed(self):
         code = self.lineEdit.text()
         name = self.kiwoom.get_master_code_name(code)
         self.lineEdit_2.setText(name)
+
+    def stock_stop_loss(self):
+        print("손실에 대한 loss 처리")
 
     def send_order(self):
         order_type_lookup = {'신규매수': 1, '신규매도': 2, '매수취소': 3, '매도취소': 4}
@@ -154,11 +163,11 @@ class MyWindow(QMainWindow, form_class):
         self.tableWidget.resizeRowsToContents()
 
     def load_buy_sell_list(self):
-        f = open("buy_list.txt", 'rt', encoding='UTF-8')
+        f = open(buy_loc, 'rt', encoding='UTF-8')
         buy_list = f.readlines()
         f.close()
 
-        f = open("sell_list.txt", 'rt', encoding='UTF-8')
+        f = open(sell_loc, 'rt', encoding='UTF-8')
         sell_list = f.readlines()
         f.close()
 
@@ -216,45 +225,53 @@ class MyWindow(QMainWindow, form_class):
         f.close()
 
     def trade_stocks(self):
-        hoga_lookup = {'지정가': "00", '시장가': "03"}
-        f = open("buy_list.txt", 'rt', encoding='UTF-8')
-        buy_list = f.readlines()
-        f.close()
+        if self.stratagy.isTimeAvalable(self.kiwoom.maesu_start_time,self.kiwoom.maesu_end_time):
+            hoga_lookup = {'지정가': "00", '시장가': "03"}
+            f = open(buy_loc, 'rt', encoding='UTF-8')
+            buy_list = f.readlines()
+            f.close()
 
-        f = open("sell_list.txt", 'rt', encoding='UTF-8')
-        sell_list = f.readlines()
-        f.close()
+            f = open(sell_loc, 'rt', encoding='UTF-8')
+            sell_list = f.readlines()
+            f.close()
 
-        account = self.comboBox.currentText()
+            account = self.comboBox.currentText()
 
-        # buy list
-        for row_data in buy_list:
-            split_row_data = row_data.split(';')
-            hoga = split_row_data[2]
-            code = split_row_data[1]
-            num = split_row_data[3]
-            price = split_row_data[4]
+            # buy list
+            for row_data in buy_list:
+                split_row_data = row_data.split(';')
+                hoga = split_row_data[2]
+                code = split_row_data[1]
+                num = split_row_data[3]
+                price = split_row_data[4]
 
-            if split_row_data[-1].rstrip() == '매수전':
-                if self.trade_buy_stratagic(code):  # * 매수전략 적용 *
-                    buy_num_info = self.stratagy.get_buy_num_price(total_buy_money, self.kiwoom.high_price, self.kiwoom.cur_price)
-                    num = buy_num_info[0]
-                    price = buy_num_info[1]
-                    print("매수수량 : ", num, " 매수상한가 : ", price)
-                    self.kiwoom.send_order("send_order_req", "0101", account, 1, code, num, price, hoga_lookup[hoga], "") # 1: 매수, 2: 매도
-                    self._file_update('buy_list.txt', code, '매수전', '주문완료')
+                if split_row_data[-1].rstrip() == '매수전':
+                    if self.trade_buy_stratagic(code):  # * 매수전략 적용 *
+                        buy_num_info = self.stratagy.get_buy_num_price(total_buy_money, self.kiwoom.high_price, self.kiwoom.cur_price)
+                        num = buy_num_info[0]
+                        price = buy_num_info[1]
+                        print("매수수량 : ", num, " 매수상한가 : ", price)
+                        self.kiwoom.send_order("send_order_req", "0101", account, 1, code, num, price, hoga_lookup[hoga], "") # 1: 매수, 2: 매도
+                        if self.kiwoom.order_result == 0:
+                            self._file_update(buy_loc, code, '매수전', '주문완료')
+                        else:
+                            print(self.kiwoom.order_result, ': 매수 처리 못했습니다.')
 
-        # sell list
-        for row_data in sell_list:
-            split_row_data = row_data.split(';')
-            hoga = split_row_data[2]
-            code = split_row_data[1]
-            num = split_row_data[3]
-            price = split_row_data[4]
+            # sell list
+            for row_data in sell_list:
+                split_row_data = row_data.split(';')
+                hoga = split_row_data[2]
+                code = split_row_data[1]
+                num = split_row_data[3]
+                price = split_row_data[4]
 
-            if split_row_data[-1].rstrip() == '매도전':
-                self.kiwoom.send_order("send_order_req", "0101", account, 2, code, num, price, hoga_lookup[hoga], "") # 1: 매수, 2: 매도
-                self._file_update('sell_list.txt', code, '매도전', '주문완료')
+                if split_row_data[-1].rstrip() == '매도전':
+                    self.kiwoom.send_order("send_order_req", "0101", account, 2, code, num, price, hoga_lookup[hoga], "") # 1: 매수, 2: 매도
+                    print('결과 : ',self.kiwoom.order_result)
+                    if self.kiwoom.order_result == 0:
+                        self._file_update(sell_loc, code, '매도전', '주문완료')
+                    else:
+                        print(self.kiwoom.order_result,': 매도 처리 못했습니다.')
         # # buy list
         # for i, row_data in enumerate(buy_list):
         #     buy_list[i] = buy_list[i].replace("매수전", "주문완료")
