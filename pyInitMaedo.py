@@ -8,8 +8,6 @@ from datetime import datetime
 import pandas as pd
 SEL_CONDITION_NAME = '스캘퍼_시가갭'
 from SysStatagy import *
-buy_loc = 'stor/buy_list.txt'
-sell_loc = 'stor/sell_list.txt'
 class PyMon:
     def __init__(self):
         self.kiwoom = Kiwoom()
@@ -66,7 +64,7 @@ class PyMon:
         stock_state = self.kiwoom.get_master_stock_state(code)
         print(code_info, mste_info, stock_state)
 
-        f = open(sell_loc, 'rt', encoding='UTF-8')
+        f = open(self.kiwoom.sell_loc, 'rt', encoding='UTF-8')
         sell_list = f.readlines()
         f.close()
 
@@ -84,12 +82,12 @@ class PyMon:
 
 
             if included == False:
-                f = open(sell_loc, write_mode, encoding='UTF-8')
+                f = open(self.kiwoom.sell_loc, write_mode, encoding='UTF-8')
                 stock_info = b_gubun + dm + code + dm + b_method + dm + str(b_qty) + dm + str(b_price) + dm + b_status
                 f.write(stock_info + '\n')
                 f.close()
         else:
-            f = open(sell_loc, 'wt', encoding='UTF-8')
+            f = open(self.kiwoom.sell_loc, 'wt', encoding='UTF-8')
             stock_info = b_gubun + dm + code + dm + b_method + dm + str(b_qty) + dm + str(b_price) + dm + b_status
             f.write(stock_info + '\n')
             f.close()

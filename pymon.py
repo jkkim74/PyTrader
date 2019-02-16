@@ -8,8 +8,6 @@ from datetime import datetime
 import pandas as pd
 SEL_CONDITION_NAME = '스캘퍼_시가갭'
 from SysStatagy import *
-buy_loc = 'stor/buy_list.txt'
-sell_loc = 'stor/sell_list.txt'
 class PyMon:
     def __init__(self):
         self.kiwoom = Kiwoom()
@@ -27,7 +25,7 @@ class PyMon:
         # print(self.kiwoom.condition_code_list[:-1])
         code_list = self.kiwoom.condition_code_list[:-1]
         print("조건검색결과 주식 : ", code_list, len(code_list))
-        f = open(buy_loc, 'wt', encoding='UTF-8')
+        f = open(self.kiwoom.buy_loc, 'wt', encoding='UTF-8')
         dm = ';'
         b_gubun = "매수"
         b_status = "매수전"

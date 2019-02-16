@@ -12,8 +12,6 @@ if test_invest:
 else:
     total_buy_money = 50000
 s_year_date = '2019-01-01';
-buy_loc = 'stor/buy_list.txt'
-sell_loc = 'stor/sell_list.txt'
 
 class MyWindow(QMainWindow, form_class):
     def __init__(self):
@@ -39,7 +37,7 @@ class MyWindow(QMainWindow, form_class):
         self.timer3 = QTimer(self)
         self.timer3.start(1000 * 10)
 
-        # Timer4
+        # Timer4 손절처리를 위한 Timer 설정
         self.timer4 = QTimer(self)
         self.timer4.start(1000 * 4)
 
@@ -89,7 +87,8 @@ class MyWindow(QMainWindow, form_class):
             self.load_buy_sell_list()
 
     def timeout4(self):
-        self.stock_stop_loss()
+        if self.checkBox_2.isChecked():
+            self.stock_stop_loss()
 
     def code_changed(self):
         code = self.lineEdit.text()
@@ -97,7 +96,21 @@ class MyWindow(QMainWindow, form_class):
         self.lineEdit_2.setText(name)
 
     def stock_stop_loss(self):
-        print("손실에 대한 loss 처리")
+        print("손실에 대한 loss 처리 설정했습니다.")
+        self.check_balance()
+        # Item list
+        item_count = len(self.kiwoom.opw00018_output['multi'])
+
+        # 한 종목에 대한 종목명, 보유량, 매입가, 현재가, 평가손익, 수익률(%)은 출력
+        for j in range(item_count):
+            row = self.kiwoom.opw00018_output['multi'][j]
+            boyou_cnt = int(row[1].replace(',', ''))
+            maeip_price = int(row[2].replace(',', ''))
+            cur_price = int(row[3].replace(',', ''))
+            stock_code = row[6]
+            mado_price = self.stratagy.get_maedo_price(maeip_price, 0.96) # 4% 익절가처리
+            if cur_price < mado_price: # 익절가보다 작으면 매도처리
+                self.kiwoom.add_stock_sell_info(stock_code, mado_price, boyou_cnt)
 
     def send_order(self):
         order_type_lookup = {'신규매수': 1, '신규매도': 2, '매수취소': 3, '매도취소': 4}
@@ -163,11 +176,11 @@ class MyWindow(QMainWindow, form_class):
         self.tableWidget.resizeRowsToContents()
 
     def load_buy_sell_list(self):
-        f = open(buy_loc, 'rt', encoding='UTF-8')
+        f = open(self.kiwoom.buy_loc, 'rt', encoding='UTF-8')
         buy_list = f.readlines()
         f.close()
 
-        f = open(sell_loc, 'rt', encoding='UTF-8')
+        f = open(self.kiwoom.sell_loc, 'rt', encoding='UTF-8')
         sell_list = f.readlines()
         f.close()
 
@@ -227,11 +240,11 @@ class MyWindow(QMainWindow, form_class):
     def trade_stocks(self):
         if self.stratagy.isTimeAvalable(self.kiwoom.maesu_start_time,self.kiwoom.maesu_end_time):
             hoga_lookup = {'지정가': "00", '시장가': "03"}
-            f = open(buy_loc, 'rt', encoding='UTF-8')
+            f = open(self.kiwoom.buy_loc, 'rt', encoding='UTF-8')
             buy_list = f.readlines()
             f.close()
 
-            f = open(sell_loc, 'rt', encoding='UTF-8')
+            f = open(self.kiwoom.sell_loc, 'rt', encoding='UTF-8')
             sell_list = f.readlines()
             f.close()
 
@@ -253,7 +266,7 @@ class MyWindow(QMainWindow, form_class):
                         print("매수수량 : ", num, " 매수상한가 : ", price)
                         self.kiwoom.send_order("send_order_req", "0101", account, 1, code, num, price, hoga_lookup[hoga], "") # 1: 매수, 2: 매도
                         if self.kiwoom.order_result == 0:
-                            self._file_update(buy_loc, code, '매수전', '주문완료')
+                            self._file_update(self.kiwoom.buy_loc, code, '매수전', '주문완료')
                         else:
                             print(self.kiwoom.order_result, ': 매수 처리 못했습니다.')
 

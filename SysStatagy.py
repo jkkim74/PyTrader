@@ -5,8 +5,8 @@ from datetime import datetime
 import util
 class SysStratagy():
 
-    def get_maedo_price(self, price):
-        s_price = int(price * 1.02)
+    def get_maedo_price(self, price, rate):
+        s_price = int(price * rate)
         if (1000 <= s_price < 5000):
             r_price = round(s_price, -1) + 5
         elif (5000 <= s_price < 10000):

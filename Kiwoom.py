@@ -22,6 +22,10 @@ class Kiwoom(QAxWidget):
         self.currentTime = datetime.now()
         self.maesu_start_time = 90000
         self.maesu_end_time = 180000
+        self.buy_loc = 'stor/buy_list.txt'
+        self.sell_loc = 'stor/sell_list.txt'
+
+
 
     @staticmethod
     def change_format(data):
@@ -298,7 +302,7 @@ class Kiwoom(QAxWidget):
             # 미체결수량이 0이고 매수인 경우, 확정매도 처리
             if self.michegyeol_suryang == 0 and self.maedo_maesu_gubun == "2":
                 sysStatagy = SysStratagy()
-                sell_price = sysStatagy.get_maedo_price(self.maeip_danga)
+                sell_price = sysStatagy.get_maedo_price(self.maeip_danga, 1.02)
                 sell_qty = self.boyou_suryang
                 self.add_stock_sell_info(self.jongmok_code, sell_price, sell_qty)
 
@@ -344,7 +348,7 @@ class Kiwoom(QAxWidget):
         stock_state = self.get_master_stock_state(code)
         print(code_info, mste_info, stock_state)
 
-        f = open("sell_list.txt", 'a', encoding='UTF-8')
+        f = open(self.sell_loc, 'a', encoding='UTF-8')
         stock_info = b_gubun + dm + code + dm + b_method + dm + str(b_qty) + dm + str(b_price) + dm + b_status
         f.write(stock_info + '\n')
         f.close()
