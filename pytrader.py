@@ -87,7 +87,7 @@ class MyWindow(QMainWindow, form_class):
             self.load_buy_sell_list()
 
     def timeout4(self):
-        if self.checkBox_2.isChecked():
+        if self.checkBox_3.isChecked():
             self.stock_stop_loss()
 
     def code_changed(self):
@@ -95,22 +95,37 @@ class MyWindow(QMainWindow, form_class):
         name = self.kiwoom.get_master_code_name(code)
         self.lineEdit_2.setText(name)
 
+    # 이익을 위한 매도주문(즉시 매도처리 이므로)을 취소하고 손실을 중지하기 위한 주문처리를 함.
     def stock_stop_loss(self):
         print("손실에 대한 loss 처리 설정했습니다.")
         self.check_balance()
         # Item list
         item_count = len(self.kiwoom.opw00018_output['multi'])
+        if item_count == 0:
+            print("보유종목이 없습니다.")
 
         # 한 종목에 대한 종목명, 보유량, 매입가, 현재가, 평가손익, 수익률(%)은 출력
         for j in range(item_count):
-            row = self.kiwoom.opw00018_output['multi'][j]
+            row = self.kiwoom.opw00018_output[j]
             boyou_cnt = int(row[1].replace(',', ''))
             maeip_price = int(row[2].replace(',', ''))
             cur_price = int(row[3].replace(',', ''))
             stock_code = row[6]
-            mado_price = self.stratagy.get_maedo_price(maeip_price, 0.96) # 4% 익절가처리
-            if cur_price < mado_price: # 익절가보다 작으면 매도처리
-                self.kiwoom.add_stock_sell_info(stock_code, mado_price, boyou_cnt)
+            # 보유종목의 이익매도 주문이 있는 경우 이익매도주문 취소후 익절처리
+            self.check_michegyoel_joomoon(stock_code)
+            row2 = self.kiwoom.opw00007_output[j]
+            if len(row2) > 0:
+                orgJoomoonNo  = int(row2[4]) # 원주문번호 정보를 가져온다.
+                self._file_line_delete(self.sell_loc, stock_code) # stor파일에 해당 종목을 삭제한다.
+            else:
+                orgJoomoonNo = ""
+            print("종목코드 :", stock_code, " 원주문번호 : ", orgJoomoonNo)
+            mado_price = self.stratagy.get_maedo_price(maeip_price, 0.95) # 4% 익절가처리
+            # 해당주식의 (이익을 얻기 위한)매도 주문 취소 처리
+            # 아침에 자동 매도주문 처리가 됐을것이고 그것에 대해 취소처리를 하는 것..
+            if not self._item_stock_exist(stock_code):
+                if cur_price < mado_price: # 익절가보다 작으면 매도처리
+                    self.kiwoom.add_stock_sell_info(stock_code, mado_price, boyou_cnt, orgJoomoonNo)
 
     def send_order(self):
         order_type_lookup = {'신규매수': 1, '신규매도': 2, '매수취소': 3, '매도취소': 4}
@@ -142,6 +157,22 @@ class MyWindow(QMainWindow, form_class):
         # opw00001
         self.kiwoom.set_input_value("계좌번호", account_number)
         self.kiwoom.comm_rq_data("opw00001_req", "opw00001", 0, "2000")
+
+    def check_michegyoel_joomoon(self, code):
+        self.kiwoom.reset_opw00007_output()
+        account_number = self.kiwoom.get_login_info("ACCNO")
+        account_number = account_number.split(';')[0]  # 첫번째 계좌번호 호출
+        joomoondate = util.cur_date('%y%m%d')
+        self.kiwoom.set_input_value("주문일자", joomoondate)
+        self.kiwoom.set_input_value("계좌번호", account_number)
+        self.kiwoom.set_input_value("비밀번호", "3051")
+        self.kiwoom.set_input_value("비밀번호매체구분", "00")
+        self.kiwoom.set_input_value("조회구분", "3")
+        self.kiwoom.set_input_value("주식채권구분", "1")
+        self.kiwoom.set_input_value("매도매수구분", "1")
+        self.kiwoom.set_input_value("종목코드", code)
+        self.kiwoom.set_input_value("시작주문번호", "")
+        self.kiwoom.comm_rq_data("opw00007_req", "opw00007", 0, "2000")
 
     def check_balance_Widget(self):
         self.check_balance()
@@ -237,6 +268,36 @@ class MyWindow(QMainWindow, form_class):
             f.write(row_data)
         f.close()
 
+    def _file_line_delete(self,fileName,code):
+        stock_list = []
+        f = open(fileName, 'rt', encoding='UTF-8')
+        stock_list = f.readlines()
+        f.close()
+
+        for i, row_data in enumerate(stock_list):
+            if code in stock_list[i]:
+                stock_list[i+1].remove()
+
+
+        # file update
+        f = open(fileName, 'wt', encoding='UTF-8')
+        for row_data in stock_list:
+            f.write(row_data)
+        f.close()
+
+    def _item_stock_exist(self, fileName, code):
+        stock_list = []
+        f = open(fileName, 'rt', encoding='UTF-8')
+        stock_list = f.readlines()
+        f.close()
+        b_exist = False
+        for i, row_data in enumerate(stock_list):
+            if code in stock_list[i]:
+                b_exist = True
+
+        return b_exist
+
+
     def trade_stocks(self):
         if self.stratagy.isTimeAvalable(self.kiwoom.maesu_start_time,self.kiwoom.maesu_end_time):
             hoga_lookup = {'지정가': "00", '시장가': "03"}
@@ -249,6 +310,9 @@ class MyWindow(QMainWindow, form_class):
             f.close()
 
             account = self.comboBox.currentText()
+
+            if len(buy_list) == 0:
+                print("매수 대상 종목이 존재하지 않습니다.")
 
             # buy list
             for row_data in buy_list:
@@ -270,6 +334,8 @@ class MyWindow(QMainWindow, form_class):
                         else:
                             print(self.kiwoom.order_result, ': 매수 처리 못했습니다.')
 
+            if len(sell_list) == 0:
+                print("매도 대상 종목이 존재하지 않습니다.")
             # sell list
             for row_data in sell_list:
                 split_row_data = row_data.split(';')
@@ -282,7 +348,7 @@ class MyWindow(QMainWindow, form_class):
                     self.kiwoom.send_order("send_order_req", "0101", account, 2, code, num, price, hoga_lookup[hoga], "") # 1: 매수, 2: 매도
                     print('결과 : ',self.kiwoom.order_result)
                     if self.kiwoom.order_result == 0:
-                        self._file_update(sell_loc, code, '매도전', '주문완료')
+                        self._file_update(self.kiwoom.sell_loc, code, '매도전', '주문완료')
                     else:
                         print(self.kiwoom.order_result,': 매도 처리 못했습니다.')
         # # buy list

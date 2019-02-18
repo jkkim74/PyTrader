@@ -21,7 +21,7 @@ class Kiwoom(QAxWidget):
         self.chegyeolInfo = {}  # { '날짜' : [ [ '주문구분', '매도', '주문/체결시간', '체결가' , '체결수량', '미체결수량'] ] }
         self.currentTime = datetime.now()
         self.maesu_start_time = 90000
-        self.maesu_end_time = 180000
+        self.maesu_end_time = 152000
         self.buy_loc = 'stor/buy_list.txt'
         self.sell_loc = 'stor/sell_list.txt'
 
@@ -135,6 +135,8 @@ class Kiwoom(QAxWidget):
             self._opw00018(rqname, trcode)
         elif rqname == "opt10001_req":
             self._opt10001(rqname, trcode)
+        elif rqname == "opw00007_req":
+            self._opw00007(rqname, trcode)
 
         try:
             self.tr_event_loop.exit()
@@ -165,6 +167,22 @@ class Kiwoom(QAxWidget):
 
     def reset_opw00018_output(self):
         self.opw00018_output = {'single': [], 'multi': []}
+
+    def reset_opw00007_output(self):
+        self.opw00007_output = []
+
+    def _opw00007(self, rqname, trcode):
+        rows = self._get_repeat_cnt(trcode, rqname)
+        for i in range(rows):
+            name = self._comm_get_data(trcode, "", rqname, i, "종목명")
+            joomoon_qty = self._comm_get_data(trcode, "", rqname, i, "주문수량")
+            joomoon_price = self._comm_get_data(trcode, "", rqname, i, "주문단가")
+            joomoon_code = self._comm_get_data(trcode, "", rqname, i, "종목번호")[1:]
+            joomoon_no = self._comm_get_data(trcode, "", rqname, i, "주문번호")
+            joomoon_qty = Kiwoom.change_format(joomoon_qty)
+            joomoon_price = Kiwoom.change_format(joomoon_price)
+
+            self.opw00007_output.append([joomoon_code, name, joomoon_qty, joomoon_price, joomoon_code, joomoon_no])
 
     def _opw00018(self, rqname, trcode):
         total_purchase_price = self._comm_get_data(trcode, "", rqname, 0, "총매입금액")
@@ -304,7 +322,7 @@ class Kiwoom(QAxWidget):
                 sysStatagy = SysStratagy()
                 sell_price = sysStatagy.get_maedo_price(self.maeip_danga, 1.02)
                 sell_qty = self.boyou_suryang
-                self.add_stock_sell_info(self.jongmok_code, sell_price, sell_qty)
+                self.add_stock_sell_info(self.jongmok_code, sell_price, sell_qty, "")
 
             pass
         elif (gubun == "0"):
@@ -336,7 +354,7 @@ class Kiwoom(QAxWidget):
 
 
 
-    def add_stock_sell_info(self,code, sell_price, sell_qty):
+    def add_stock_sell_info(self,code, sell_price, sell_qty, orgJoomoonNo):
         dm = ';'
         b_gubun = "매도"
         b_status = "매도전"
@@ -346,10 +364,10 @@ class Kiwoom(QAxWidget):
         code_info = self.get_master_code_name(code)
         mste_info = self.get_master_construction(code)
         stock_state = self.get_master_stock_state(code)
-        print(code_info, mste_info, stock_state)
+        print(code_info, mste_info, stock_state, orgJoomoonNo)
 
         f = open(self.sell_loc, 'a', encoding='UTF-8')
-        stock_info = b_gubun + dm + code + dm + b_method + dm + str(b_qty) + dm + str(b_price) + dm + b_status
+        stock_info = b_gubun + dm + code + dm + b_method + dm + str(b_qty) + dm + str(b_price) + dm + b_status + dm + orgJoomoonNo
         f.write(stock_info + '\n')
         f.close()
 

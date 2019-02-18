@@ -24,6 +24,9 @@ class PyMon:
         self.check_balance()
         # Item list
         item_count = len(self.kiwoom.opw00018_output['multi'])
+        if item_count == 0:
+            print("보유종목이 없습니다. [",item_count,"]")
+            pass
         # 한 종목에 대한 종목명, 보유량, 매입가, 현재가, 평가손익, 수익률(%)은 출력
         stratagy = SysStratagy()
         for j in range(item_count):
@@ -99,7 +102,7 @@ class PyMon:
         # print(self.kiwoom.condition_code_list[:-1])
         code_list = self.kiwoom.condition_code_list[:-1]
         print("조건검색결과 주식 : ", code_list, len(code_list))
-        f = open(buy_loc, 'wt', encoding='UTF-8')
+        f = open(self.kiwoom.buy_loc, 'wt', encoding='UTF-8')
         dm = ';'
         b_gubun = "매수"
         b_status = "매수전"
