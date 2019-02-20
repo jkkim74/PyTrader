@@ -344,7 +344,7 @@ class MyWindow(QMainWindow, form_class):
                 num = split_row_data[3]
                 price = split_row_data[4]
 
-                if split_row_data[-1].rstrip() == '매도전':
+                if split_row_data[-2].rstrip() == '매도전':
                     self.kiwoom.send_order("send_order_req", "0101", account, 2, code, num, price, hoga_lookup[hoga], "") # 1: 매수, 2: 매도
                     print('결과 : ',self.kiwoom.order_result)
                     if self.kiwoom.order_result == 0:

@@ -30,7 +30,7 @@ class PyMon:
         b_gubun = "매수"
         b_status = "매수전"
         b_price = 0
-        b_method = "시장가"
+        b_method = "지정가"
         b_qty = 0
         for code in code_list:
             code_info = self.kiwoom.get_master_code_name(code)
