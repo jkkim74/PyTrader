@@ -1,4 +1,4 @@
-import sys
+import sys,os,copy,json
 from PyQt5.QtWidgets import *
 from PyQt5.QAxContainer import *
 from PyQt5.QtCore import *
@@ -8,9 +8,21 @@ import sqlite3
 import datetime
 import jk_util, util
 from SysStatagy import *
+import logging
+from logging import FileHandler
 
 TR_REQ_TIME_INTERVAL = 0.2
+# 로그 파일 핸들러
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+fh_log = FileHandler(os.path.join(BASE_DIR, 'logs/debug.log'), encoding='utf-8')
+fh_log.setLevel(logging.DEBUG)
 
+# 로거 생성 및 핸들러 등록
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logger.addHandler(fh_log)
+
+JANGO_INFO_FILE_PATH =  "logs" + os.path.sep + "jango.json"
 class Kiwoom(QAxWidget):
     def __init__(self):
         super().__init__()
@@ -19,12 +31,12 @@ class Kiwoom(QAxWidget):
         self.jangoInfo = {}  # { 'jongmokCode': { '이익실현가': 222, ...}}
         self.michegyeolInfo = {}
         self.chegyeolInfo = {}  # { '날짜' : [ [ '주문구분', '매도', '주문/체결시간', '체결가' , '체결수량', '미체결수량'] ] }
+        self.jongmokInfo = {} # 매매를 위한 대상 종목의 현재 정보 조회
         self.currentTime = datetime.now()
         self.maesu_start_time = 90000
-        self.maesu_end_time = 152000
+        self.maesu_end_time = 180000
         self.buy_loc = 'stor/buy_list.txt'
         self.sell_loc = 'stor/sell_list.txt'
-
 
 
     @staticmethod
@@ -65,10 +77,12 @@ class Kiwoom(QAxWidget):
 
     def _set_signal_slots(self):
         self.OnEventConnect.connect(self._event_connect)
+        self.OnReceiveRealData.connect(self._receive_real_data)
         self.OnReceiveTrData.connect(self._receive_tr_data)
         self.OnReceiveChejanData.connect(self._receive_chejan_data)
         self.OnReceiveConditionVer.connect(self._receive_condition_ver)
         self.OnReceiveTrCondition.connect(self._receive_tr_condition)
+        self.OnReceiveMsg.connect(self._receive_msg)
 
     def comm_connect(self):
         self.dynamicCall("CommConnect()")
@@ -82,6 +96,12 @@ class Kiwoom(QAxWidget):
             print("disconnected")
 
         self.login_event_loop.exit()
+
+    def setRealRemove(self, scrNo, delCode):
+        self.dynamicCall("SetRealRemove(QString, QString)", scrNo, delCode)
+
+    def setRealReg(self, screenNo, codeList, fidList, optType):
+        return self.dynamicCall("SetRealReg(QString, QString, QString, QString)", screenNo, codeList, fidList, optType)
 
     def get_code_list_by_market(self, market):
         code_list = self.dynamicCall("GetCodeListByMarket(QString)", market)
@@ -117,10 +137,65 @@ class Kiwoom(QAxWidget):
                                real_type, field_name, index, item_name)
         return ret.strip()
 
+    # strRealType – 실시간 구분
+    # nFid – 실시간 아이템
+    # Ex) 현재가출력 - openApi.GetCommRealData(“주식시세”, 10);
+    # 참고)실시간 현재가는 주식시세, 주식체결 등 다른 실시간타입(RealType)으로도 수신가능
+    def _comm_real_data(self, realType, fid):
+        return self.dynamicCall("GetCommRealData(QString, int)", realType, fid).strip()
+
     def _get_repeat_cnt(self, trcode, rqname):
         ret = self.dynamicCall("GetRepeatCnt(QString, QString)", trcode, rqname)
         return ret
 
+    # -------------------------------------
+    # 실시간 관련함수
+    # -------------------------------------
+    def _receive_real_data(self, sCode, sRealType, sRealData):
+        """
+        실시간 데이터 수신
+          OnReceiveRealData(
+          BSTR sCode,        // 종목코드
+          BSTR sRealType,    // 리얼타입
+          BSTR sRealData    // 실시간 데이터 전문
+          )
+        :param sCode: 종목코드
+        :param sRealType: 리얼타입
+        :param sRealData: 실시간 데이터 전문
+        :param kwargs:
+        :return:
+        """
+        ## print(util.cur_date_time() + " : REAL Data: %s %s %s" % (sCode, sRealType, sRealData))
+        logger.debug(util.cur_date_time() + " : REAL Data: %s %s %s" % (sCode, sRealType, sRealData))
+        self.makeBasicInfo(sCode)
+        if sRealType == "주식체결":
+            pass
+    # 실시간 체결(기본) 정보
+    def makeBasicInfo(self, jongmokCode):
+        #주식 호가 잔량 정보 요청
+        result = None
+        for col_name in jk_util.dict_jusik['실시간-주식체결']:
+            result = self._comm_real_data(jongmokCode, jk_util.name_fid[col_name] )
+            print(col_name, ' : ', result.strip())
+            if (jongmokCode in self.jangoInfo): # 이미 매수한 종목에 대한 정보
+                self.jangoInfo[jongmokCode][col_name] = result.strip()
+            else: # 매수를 위해 대상으로 놓은 종목에 대한 정보
+                self.jongmokInfo[jongmokCode][col_name] = result.strip()
+            # if (jongmokCode in self.jangoInfo):
+            #     self.jangoInfo[jongmokCode][col_name] = result.strip()
+        pass
+
+    def _receive_msg(self, sScrNo, sRQName, sTrCode, sMsg):
+        """주문성공, 실패 메시지
+        :param sScrNo: 화면번호
+        :param sRQName: 사용자 구분명
+        :param sTrCode: TR이름
+        :param sMsg: 서버에서 전달하는 메시지
+        :param kwargs:
+        :return:
+        """
+        print(util.cur_date_time() + " : 주문/잔고: %s %s %s %s" % (sScrNo, sRQName, sTrCode, sMsg))
+        logger.debug(util.cur_date_time() + " : 주문/잔고: %s %s %s %s" % (sScrNo, sRQName, sTrCode, sMsg))
     def _receive_tr_data(self, screen_no, rqname, trcode, record_name, next, unused1, unused2, unused3, unused4):
         if next == '2':
             self.remained_data = True
@@ -206,6 +281,7 @@ class Kiwoom(QAxWidget):
         # multi data
         rows = self._get_repeat_cnt(trcode, rqname)
         for i in range(rows):
+            info_dict = {}
             name = self._comm_get_data(trcode, "", rqname, i, "종목명")
             quantity = self._comm_get_data(trcode, "", rqname, i, "보유수량")
             purchase_price = self._comm_get_data(trcode, "", rqname, i, "매입가")
@@ -219,8 +295,19 @@ class Kiwoom(QAxWidget):
             current_price = Kiwoom.change_format(current_price)
             eval_profit_loss_price = Kiwoom.change_format(eval_profit_loss_price)
             earning_rate = Kiwoom.change_format2(earning_rate)
-
+            info_dict['종목명'] = name
+            info_dict['종목번호'] = code
+            info_dict['수익률(%)'] = earning_rate
             self.opw00018_output['multi'].append([name, quantity, purchase_price, current_price, eval_profit_loss_price, earning_rate, code])
+
+            if code not in self.jangoInfo.keys():
+                self.jangoInfo[code] = info_dict
+            else:
+                # 기존에 가지고 있는 종목이면 update
+                self.jangoInfo[code].update(info_dict)
+
+        # 잔고정보 json으로 저장
+        self.makeJangoInfoFile()
 
     def _opt10001(self, rqname, trcode):
         self.cur_price  = self._comm_get_data(trcode,"", rqname, 0, "현재가")
@@ -410,7 +497,22 @@ class Kiwoom(QAxWidget):
         self.condition_tr_loop.exit()
         #return code_list
 
+    def makeJangoInfoFile(self):
+        print(util.whoami())
+        remove_keys = [ '매도호가1','매도호가2', '매도호가수량1', '매도호가수량2', '매도호가총잔량',
+                        '매수호가1', '매수호가2', '매수호가수량1', '매수호가수량2', '매수호가수량3', '매수호가수량4', '매수호가총잔량',
+                        '현재가', '호가시간', '세금', '전일종가', '현재가', '종목번호', '수익율', '수익', '잔고' , '매도중', '시가', '고가', '저가', '장구분',
+                        '거래량', '등락율', '전일대비', '기준가', '상한가', '하한가', '5분봉타임컷기준' ]
+        temp = copy.deepcopy(self.jangoInfo)
+        # 불필요 필드 제거
+        for jongmok_code, contents in temp.items():
+            for key in remove_keys:
+                if( key in contents):
+                    del contents[key]
 
+        with open(JANGO_INFO_FILE_PATH, 'w', encoding = 'utf8' ) as f:
+            f.write(json.dumps(temp, ensure_ascii= False, indent= 2, sort_keys = True ))
+        pass
 
 
 if __name__ == "__main__":

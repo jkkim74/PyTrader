@@ -26,6 +26,8 @@ class SysStratagy():
         return r_price
 
     def isBuyStockAvailable(self, buy_stock_code, code_nm , cur_price, start_price, s_year_date):
+        if start_price == '' or cur_price == '':
+            return False
         print('----------------------------------------------------------------------')
         # 금일날짜
         today = datetime.today().strftime("%Y%m%d")
@@ -60,7 +62,7 @@ class SysStratagy():
         else:
             s_buy_price = int(s_buy_close_price_t)
             e_buy_price = int(e_buy_price)
-
+        print('[DEBUG] start_price :', start_price)
         if start_price[0] == '-' or start_price[0] == '+':
             start_price = start_price[1:]
 

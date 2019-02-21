@@ -27,7 +27,7 @@ class MyWindow(QMainWindow, form_class):
 
         # Timer1
         self.timer = QTimer(self)
-        self.timer.start(1000*4)
+        self.timer.start(1000*5)
 
         # Timer2
         self.timer2 = QTimer(self)
@@ -184,6 +184,7 @@ class MyWindow(QMainWindow, form_class):
         # 총매입, 총평가, 총손익, 총수익률(%), 추정자산을 QTableWidget의 칼럼에 추가하는 코드.
         # 데이터는 self.kiwoom.opw00018_output['single']을 통해 얻어올 수 있음.
         for i in range(1, 6):
+            print('Debug', self.kiwoom.opw00018_output['single'][i-1])
             item = QTableWidgetItem(self.kiwoom.opw00018_output['single'][i - 1])
             item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
             self.tableWidget.setItem(0, i, item)
@@ -247,8 +248,14 @@ class MyWindow(QMainWindow, form_class):
         self.kiwoom.set_input_value("종목코드", code)
         self.kiwoom.comm_rq_data("opt10001_req", "opt10001", 0, "2000")
         name = self.kiwoom.get_master_code_name(code)
+        # cur_price = self.kiwoom.jangoInfo[code]['현재가']
+        # if cur_price[0] == '-' or cur_price[0] == '+':
+        #     cur_price = cur_price[1:]
+        # open_price = self.kiwoom.jangoInfo[code]['시가']
+        # if cur_price[0] == '-' or cur_price[0] == '+':
+        #     open_price = open_price[1:]
         # print(name, ",현재가 : ", self.kiwoom.cur_price)
-        result = self.stratagy.isBuyStockAvailable(code, name, self.kiwoom.cur_price,self.kiwoom.open_price, s_year_date)
+        result = self.stratagy.isBuyStockAvailable(code, name, self.kiwoom.cur_price, self.kiwoom.open_price, s_year_date)
         return result
         # return True
 
