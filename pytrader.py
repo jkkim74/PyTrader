@@ -47,6 +47,9 @@ class MyWindow(QMainWindow, form_class):
         accounts_list = accounts.split(';')[0:accouns_num]
         self.comboBox.addItems(accounts_list)
 
+        # 보유 주식 매도 주문 아침9시전에 구동시에 보유주식에 대한 매도주문처리
+        self.init_boyou_mado()
+
         # 매도/매수 리스트 조회
         self.load_buy_sell_list()
 
@@ -58,6 +61,16 @@ class MyWindow(QMainWindow, form_class):
         self.lineEdit.textChanged.connect(self.code_changed)
         self.pushButton.clicked.connect(self.send_order)
         self.pushButton_2.clicked.connect(self.check_balance_Widget) # pushButton_2 라는 객체가 클릭될 때 check_balance라는 메서드가 호출
+
+    def init_boyou_mado(self):
+        market_start_time = QTime(9, 0, 0)
+        current_time = QTime.currentTime()
+
+        if current_time < market_start_time:
+            # 보유종목 매도 처리..
+            self.init_maedo_proc()
+        else:
+            print("보유주식에 대한 매도주문은 9시전에만 가능함.")
 
     def timeout(self):
         market_start_time = QTime(9, 0, 0)
@@ -242,20 +255,94 @@ class MyWindow(QMainWindow, form_class):
                 self.tableWidget_3.setItem(len(buy_list) + j, i, item)
 
         self.tableWidget_3.resizeRowsToContents()
+
+    # 프로그램 시작시, 보유종목에 대한 매도처리
+    def init_maedo_proc(self):
+        self.check_balance()
+        # Item list
+        item_count = len(self.kiwoom.opw00018_output['multi'])
+        if item_count == 0:
+            print("보유종목이 없습니다. [", item_count, "]")
+            pass
+        # 한 종목에 대한 종목명, 보유량, 매입가, 현재가, 평가손익, 수익률(%)은 출력
+        stratagy = SysStratagy()
+        for j in range(item_count):
+            row = self.kiwoom.opw00018_output['multi'][j]
+            boyou_cnt = int(row[1].replace(',', ''))
+            maeip_price = int(row[2].replace(',', ''))
+            stock_code = row[6]
+            mado_price = stratagy.get_maedo_price(maeip_price, 1.02)
+            self.add_init_stock_sell_info(stock_code, mado_price, boyou_cnt)
+
+    # 매도 Stor에 매도 종목 추가
+    def add_init_stock_sell_info(self,code, sell_price, sell_qty):
+        dm = ';'
+        b_gubun = "매도"
+        b_status = "매도전"
+        b_price = sell_price
+        b_method = "지정가"
+        b_qty = sell_qty
+        included = False
+        code_info = self.kiwoom.get_master_code_name(code)
+        mste_info = self.kiwoom.get_master_construction(code)
+        stock_state = self.kiwoom.get_master_stock_state(code)
+        print(code_info, mste_info, stock_state)
+
+        f = open(self.kiwoom.sell_loc, 'rt', encoding='UTF-8')
+        sell_list = f.readlines()
+        f.close()
+
+        if self.stratagy.isTimeAvalable(self.kiwoom.maesu_start_time,self.kiwoom.maesu_end_time):
+            if len(sell_list) > 0:
+                write_mode = 'a' # 추가
+            else:
+                write_mode = 'wt'
+            for stock in sell_list:
+                if code in stock:
+                    included = True
+                else:
+                    included = False
+            if not included:
+                f = open(self.kiwoom.sell_loc, write_mode, encoding='UTF-8')
+                stock_info = b_gubun + dm + code + dm + b_method + dm + str(b_qty) + dm + str(b_price) + dm + b_status
+                f.write(stock_info + '\n')
+                f.close()
+        else:
+            f = open(self.kiwoom.sell_loc, 'wt', encoding='UTF-8')
+            stock_info = b_gubun + dm + code + dm + b_method + dm + str(b_qty) + dm + str(b_price) + dm + b_status
+            f.write(stock_info + '\n')
+            f.close()
     # buy_list는 애초에 모니터링시 기본정보 목록에서 추출
     # 매매전략에 해당하는 종목을 buy_list_txt에 저장 
     def trade_buy_stratagic(self,code):
-        self.kiwoom.set_input_value("종목코드", code)
-        self.kiwoom.comm_rq_data("opt10001_req", "opt10001", 0, "2000")
-        name = self.kiwoom.get_master_code_name(code)
-        # cur_price = self.kiwoom.jangoInfo[code]['현재가']
-        # if cur_price[0] == '-' or cur_price[0] == '+':
-        #     cur_price = cur_price[1:]
-        # open_price = self.kiwoom.jangoInfo[code]['시가']
-        # if cur_price[0] == '-' or cur_price[0] == '+':
-        #     open_price = open_price[1:]
-        # print(name, ",현재가 : ", self.kiwoom.cur_price)
-        result = self.stratagy.isBuyStockAvailable(code, name, self.kiwoom.cur_price, self.kiwoom.open_price, s_year_date)
+        stockInfo = {}
+        stockInfo = self.get_current_info(code)
+        if stockInfo is not None and len(stockInfo) > 0:
+            print('종목정보 : ', stockInfo)
+            name = self.kiwoom.get_master_code_name(code);
+            cur_price = stockInfo.get('현재가')
+            open_price = stockInfo.get('시가')
+            print('현재가 :', cur_price, ' 시가:', open_price)
+            if open_price == '' or cur_price == '':
+                return False
+            else:
+                if cur_price[0] == '-' or cur_price[0] == '+':
+                    cur_price = cur_price[1:]
+                if open_price[0] == '-' or open_price[0] == '+':
+                    open_price = open_price[1:]
+                result = self.stratagy.isBuyStockAvailable(code, name, cur_price, open_price,s_year_date)
+        else:
+            self.kiwoom.set_input_value("종목코드", code)
+            self.kiwoom.comm_rq_data("opt10001_req", "opt10001", 0, "2000")
+            name = self.kiwoom.get_master_code_name(code)
+            # cur_price = self.kiwoom.jangoInfo[code]['현재가']
+            # if cur_price[0] == '-' or cur_price[0] == '+':
+            #     cur_price = cur_price[1:]
+            # open_price = self.kiwoom.jangoInfo[code]['시가']
+            # if cur_price[0] == '-' or cur_price[0] == '+':
+            #     open_price = open_price[1:]
+            # print(name, ",현재가 : ", self.kiwoom.cur_price)
+            result = self.stratagy.isBuyStockAvailable(code, name, self.kiwoom.cur_price, self.kiwoom.open_price, s_year_date)
         return result
         # return True
 
@@ -304,6 +391,9 @@ class MyWindow(QMainWindow, form_class):
 
         return b_exist
 
+    def get_current_info(self, code):
+       return self.kiwoom.jongmokInfo.get(code)
+
 
     def trade_stocks(self):
         if self.stratagy.isTimeAvalable(self.kiwoom.maesu_start_time,self.kiwoom.maesu_end_time):
@@ -311,6 +401,13 @@ class MyWindow(QMainWindow, form_class):
             f = open(self.kiwoom.buy_loc, 'rt', encoding='UTF-8')
             buy_list = f.readlines()
             f.close()
+            code = ''
+            for stock in buy_list:
+                code = code + stock.split(";")[1] +";"
+
+            if code != '':
+                fidList = str(jk_util.name_fid["현재가"]) + ";" + str(jk_util.name_fid["종목명"]) + ";" + str(jk_util.name_fid["종목코드"])
+                self.kiwoom.setRealReg("0101", code[:-1], fidList, "0")
 
             f = open(self.kiwoom.sell_loc, 'rt', encoding='UTF-8')
             sell_list = f.readlines()
@@ -328,7 +425,6 @@ class MyWindow(QMainWindow, form_class):
                 code = split_row_data[1]
                 num = split_row_data[3]
                 price = split_row_data[4]
-
                 if split_row_data[-1].rstrip() == '매수전':
                     if self.trade_buy_stratagic(code):  # * 매수전략 적용 *
                         buy_num_info = self.stratagy.get_buy_num_price(total_buy_money, self.kiwoom.high_price, self.kiwoom.cur_price)
@@ -340,6 +436,7 @@ class MyWindow(QMainWindow, form_class):
                             self._file_update(self.kiwoom.buy_loc, code, '매수전', '주문완료')
                         else:
                             print(self.kiwoom.order_result, ': 매수 처리 못했습니다.')
+                # time.sleep(5)
 
             if len(sell_list) == 0:
                 print("매도 대상 종목이 존재하지 않습니다.")

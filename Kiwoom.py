@@ -165,24 +165,28 @@ class Kiwoom(QAxWidget):
         :param kwargs:
         :return:
         """
-        ## print(util.cur_date_time() + " : REAL Data: %s %s %s" % (sCode, sRealType, sRealData))
+        # print(util.cur_date_time() + " : REAL Data: %s %s %s" % (sCode, sRealType, sRealData))
         logger.debug(util.cur_date_time() + " : REAL Data: %s %s %s" % (sCode, sRealType, sRealData))
-        self.makeBasicInfo(sCode)
+        if sCode != '':
+            self.makeBasicInfo(sCode)
         if sRealType == "주식체결":
             pass
     # 실시간 체결(기본) 정보
     def makeBasicInfo(self, jongmokCode):
         #주식 호가 잔량 정보 요청
         result = None
+        info_dic = {}
         for col_name in jk_util.dict_jusik['실시간-주식체결']:
             result = self._comm_real_data(jongmokCode, jk_util.name_fid[col_name] )
-            print(col_name, ' : ', result.strip())
-            if (jongmokCode in self.jangoInfo): # 이미 매수한 종목에 대한 정보
-                self.jangoInfo[jongmokCode][col_name] = result.strip()
-            else: # 매수를 위해 대상으로 놓은 종목에 대한 정보
-                self.jongmokInfo[jongmokCode][col_name] = result.strip()
-            # if (jongmokCode in self.jangoInfo):
-            #     self.jangoInfo[jongmokCode][col_name] = result.strip()
+            # print(col_name, ' : ', result.strip())
+            info_dic.update({col_name:result.strip()})
+
+        if (jongmokCode in self.jangoInfo): # 이미 매수한 종목에 대한 정보
+            self.jangoInfo[jongmokCode] = info_dic
+        else: # 매수를 위해 대상으로 놓은 종목에 대한 정보
+            self.jongmokInfo[jongmokCode] = info_dic
+        # if (jongmokCode in self.jangoInfo):
+        #     self.jangoInfo[jongmokCode][col_name] = result.strip()
         pass
 
     def _receive_msg(self, sScrNo, sRQName, sTrCode, sMsg):
