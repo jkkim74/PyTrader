@@ -20,8 +20,8 @@ class PyMon:
 
     def get_codition_stock_list(self):
         self.kiwoom.get_condition_load()
-        # self.kiwoom.get_condition_name_list()
-        self.kiwoom.send_condition("0150", SEL_CONDITION_NAME, "011", 1)
+        conditionName = self.kiwoom.get_condition_name_list()
+        self.kiwoom.send_condition("0150", SEL_CONDITION_NAME, "014", 1)
         # print(self.kiwoom.condition_code_list[:-1])
         code_list = self.kiwoom.condition_code_list[:-1]
         print("조건검색결과 주식 : ", code_list, len(code_list))
@@ -37,8 +37,9 @@ class PyMon:
             mste_info = self.kiwoom.get_master_construction(code)
             stock_state = self.kiwoom.get_master_stock_state(code)
             print(code_info, mste_info, stock_state)
-            stock_info = b_gubun+dm+code+dm+b_method+dm+str(b_qty)+dm+str(b_price)+dm+b_status
-            f.write(stock_info+'\n')
+            if mste_info == '정상':
+                stock_info = b_gubun+dm+code+dm+b_method+dm+str(b_qty)+dm+str(b_price)+dm+b_status
+                f.write(stock_info+'\n')
         f.close()
         if len(code_list) == 0:
             print("해당하는 조건검색의 결과 주식이 없습니다.")
@@ -63,7 +64,7 @@ class PyMon:
     def run_condition_data(self):
         self.kiwoom.get_condition_load()
         #self.kiwoom.get_condition_name_list()
-        self.kiwoom.send_condition("0150", "스캘퍼_시가갭", "011", 1)
+        self.kiwoom.send_condition("0150", SEL_CONDITION_NAME, "014", 1)
         #print(self.kiwoom.condition_code_list[:-1])
         code_list = self.kiwoom.condition_code_list[:-1]
         # 금일날짜
