@@ -6,7 +6,7 @@ import time
 import pickle
 from datetime import datetime
 import pandas as pd
-SEL_CONDITION_NAME = '스캘퍼_시가갭'
+SEL_CONDITION_NAME = '스캘퍼_시가갭_3'
 from SysStatagy import *
 class PyMon:
     def __init__(self):

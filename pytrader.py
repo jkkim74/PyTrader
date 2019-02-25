@@ -304,7 +304,7 @@ class MyWindow(QMainWindow, form_class):
                     included = False
             if not included:
                 f = open(self.kiwoom.sell_loc, write_mode, encoding='UTF-8')
-                stock_info = b_gubun + dm + code + dm + b_method + dm + str(b_qty) + dm + str(b_price) + dm + b_status
+                stock_info = b_gubun + dm + code + dm + b_method + dm + str(b_qty) + dm + str(b_price) + dm + b_status + dm
                 f.write(stock_info + '\n')
                 f.close()
         else:
