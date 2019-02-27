@@ -66,6 +66,8 @@ class MyWindow(QMainWindow, form_class):
         market_start_time = QTime(9, 0, 0)
         current_time = QTime.currentTime()
 
+        # self.init_maedo_proc()
+
         if current_time < market_start_time:
             # 보유종목 매도 처리..
             self.init_maedo_proc()
@@ -309,7 +311,7 @@ class MyWindow(QMainWindow, form_class):
                 f.close()
         else:
             f = open(self.kiwoom.sell_loc, 'wt', encoding='UTF-8')
-            stock_info = b_gubun + dm + code + dm + b_method + dm + str(b_qty) + dm + str(b_price) + dm + b_status
+            stock_info = b_gubun + dm + code + dm + b_method + dm + str(b_qty) + dm + str(b_price) + dm + b_status + dm
             f.write(stock_info + '\n')
             f.close()
     # buy_list는 애초에 모니터링시 기본정보 목록에서 추출

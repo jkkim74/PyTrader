@@ -6,7 +6,8 @@ import time
 import pickle
 from datetime import datetime
 import pandas as pd
-SEL_CONDITION_NAME = '스캘퍼_시가갭_3'
+CONDITION_INDEX = "011" # "014"
+SEL_CONDITION_NAME = '스캘퍼_시가갭' # '스캘퍼_시가갭_3'
 from SysStatagy import *
 class PyMon:
     def __init__(self):
@@ -21,7 +22,7 @@ class PyMon:
     def get_codition_stock_list(self):
         self.kiwoom.get_condition_load()
         conditionName = self.kiwoom.get_condition_name_list()
-        self.kiwoom.send_condition("0150", SEL_CONDITION_NAME, "014", 1)
+        self.kiwoom.send_condition("0150", SEL_CONDITION_NAME, CONDITION_INDEX, 1)
         # print(self.kiwoom.condition_code_list[:-1])
         code_list = self.kiwoom.condition_code_list[:-1]
         print("조건검색결과 주식 : ", code_list, len(code_list))
@@ -64,7 +65,7 @@ class PyMon:
     def run_condition_data(self):
         self.kiwoom.get_condition_load()
         #self.kiwoom.get_condition_name_list()
-        self.kiwoom.send_condition("0150", SEL_CONDITION_NAME, "014", 1)
+        self.kiwoom.send_condition("0150", SEL_CONDITION_NAME, CONDITION_INDEX, 1)
         #print(self.kiwoom.condition_code_list[:-1])
         code_list = self.kiwoom.condition_code_list[:-1]
         # 금일날짜

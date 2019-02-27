@@ -354,9 +354,6 @@ class Kiwoom(QAxWidget):
                     # 미체결 수량이 없으므로 정보 삭제
             del (self.michegyeolInfo[self.jongmok_code ])
             if (self.boyou_suryang == 0):
-                # 보유 수량이 0 인 경우 매도 수행
-                if (self.jongmok_code  not in self.todayTradedCodeList):
-                    self.todayTradedCodeList.append(self.jongmok_code )
                 self.jangoInfo.pop(self.jongmok_code )
                 # self.removeConditionOccurList(jongmok_code)
                 # else:
