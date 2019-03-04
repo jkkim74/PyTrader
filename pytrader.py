@@ -8,7 +8,7 @@ from SysStatagy import *
 form_class = uic.loadUiType("pytrader.ui")[0]
 test_invest = True
 if test_invest:
-    total_buy_money = 10000000
+    total_buy_money = 30000000
 else:
     total_buy_money = 50000
 s_year_date = '2019-01-01';
