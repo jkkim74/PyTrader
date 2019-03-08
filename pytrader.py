@@ -8,7 +8,7 @@ from SysStatagy import *
 form_class = uic.loadUiType("pytrader.ui")[0]
 test_invest = True
 if test_invest:
-    total_buy_money = 30000000
+    total_buy_money = 10000000
 else:
     total_buy_money = 50000
 s_year_date = '2019-01-01';
@@ -396,6 +396,9 @@ class MyWindow(QMainWindow, form_class):
     def get_current_info(self, code):
        return self.kiwoom.jongmokInfo.get(code)
 
+    def get_current_info_tr(self,code):
+        self.kiwoom.set_input_value("종목코드", code)
+        self.kiwoom.comm_rq_data("opt10001_req", "opt10001", 0, "2000")
 
     def trade_stocks(self):
         if self.stratagy.isTimeAvalable(self.kiwoom.maesu_start_time,self.kiwoom.maesu_end_time):
@@ -429,6 +432,7 @@ class MyWindow(QMainWindow, form_class):
                 price = split_row_data[4]
                 if split_row_data[-1].rstrip() == '매수전':
                     if self.trade_buy_stratagic(code):  # * 매수전략 적용 *
+                        self.get_current_info_tr(code)
                         buy_num_info = self.stratagy.get_buy_num_price(total_buy_money, self.kiwoom.high_price, self.kiwoom.cur_price)
                         num = buy_num_info[0]
                         price = buy_num_info[1]
