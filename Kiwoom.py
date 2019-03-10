@@ -34,7 +34,7 @@ class Kiwoom(QAxWidget):
         self.jongmokInfo = {} # 매매를 위한 대상 종목의 현재 정보 조회
         self.currentTime = datetime.now()
         self.maesu_start_time = 90000
-        self.maesu_end_time = 180000
+        self.maesu_end_time = 190000
         self.buy_loc = 'stor/buy_list.txt'
         self.sell_loc = 'stor/sell_list.txt'
 
@@ -403,8 +403,8 @@ class Kiwoom(QAxWidget):
 
                     self.jangoInfo[self.jongmok_code].update(current_jango)
 
-            # self.makeEtcJangoInfo(jongmok_code)
-            # self.makeJangoInfoFile()
+            # self.makeEtcJangoInfo(self.jongmok_code)
+            self.makeJangoInfoFile()
             # 미체결수량이 0이고 매수인 경우, 확정매도 처리
             if self.michegyeol_suryang == 0 and self.maedo_maesu_gubun == "2":
                 sysStatagy = SysStratagy()
@@ -511,7 +511,7 @@ class Kiwoom(QAxWidget):
                 if( key in contents):
                     del contents[key]
 
-        with open(JANGO_INFO_FILE_PATH, 'w', encoding = 'utf8' ) as f:
+        with open(JANGO_INFO_FILE_PATH, 'a', encoding = 'utf8' ) as f:
             f.write(json.dumps(temp, ensure_ascii= False, indent= 2, sort_keys = True ))
         pass
 

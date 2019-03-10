@@ -75,12 +75,16 @@ class MyWindow(QMainWindow, form_class):
             print("보유주식에 대한 매도주문은 9시전에만 가능함.")
 
     def timeout(self):
-        market_start_time = QTime(9, 0, 0)
+        # market_start_time = QTime(8, 0, 0)
+        # market_end_time = QTime(19, 0, 0)
         current_time = QTime.currentTime()
 
-        if current_time > market_start_time and self.trade_stocks_done is False:
+        if self.stratagy.isTimeAvalable(self.kiwoom.maesu_start_time,self.kiwoom.maesu_end_time) and self.trade_stocks_done is False:
             self.trade_stocks()
             #self.trade_stocks_done = True
+        else:
+            print("지금은 거래 가능한 시간이 아닙니다.")
+            # sys.exit(1)
 
         text_time = current_time.toString("hh:mm:ss")
         time_msg = "현재시간: " + text_time
@@ -432,6 +436,7 @@ class MyWindow(QMainWindow, form_class):
                 price = split_row_data[4]
                 if split_row_data[-1].rstrip() == '매수전':
                     if self.trade_buy_stratagic(code):  # * 매수전략 적용 *
+                        # 다시 해당 주식의 TR정보를 가져옮.. 상한가 오류로 인하여..
                         self.get_current_info_tr(code)
                         buy_num_info = self.stratagy.get_buy_num_price(total_buy_money, self.kiwoom.high_price, self.kiwoom.cur_price)
                         num = buy_num_info[0]
