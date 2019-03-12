@@ -34,7 +34,7 @@ class Kiwoom(QAxWidget):
         self.jongmokInfo = {} # 매매를 위한 대상 종목의 현재 정보 조회
         self.currentTime = datetime.now()
         self.maesu_start_time = 90000
-        self.maesu_end_time = 190000
+        self.maesu_end_time = 180000
         self.buy_loc = 'stor/buy_list.txt'
         self.sell_loc = 'stor/sell_list.txt'
 

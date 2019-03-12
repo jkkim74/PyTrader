@@ -7,8 +7,9 @@ from SysStatagy import *
 
 form_class = uic.loadUiType("pytrader.ui")[0]
 test_invest = True
+total_boyou_cnt = 3 # 전체 보유 카운트
 if test_invest:
-    total_buy_money = 10000000
+    total_buy_money = 15000000
 else:
     total_buy_money = 50000
 s_year_date = '2019-01-01';
@@ -84,7 +85,7 @@ class MyWindow(QMainWindow, form_class):
             #self.trade_stocks_done = True
         else:
             print("지금은 거래 가능한 시간이 아닙니다.")
-            # sys.exit(1)
+            sys.exit(1)
 
         text_time = current_time.toString("hh:mm:ss")
         time_msg = "현재시간: " + text_time
@@ -113,6 +114,15 @@ class MyWindow(QMainWindow, form_class):
         code = self.lineEdit.text()
         name = self.kiwoom.get_master_code_name(code)
         self.lineEdit_2.setText(name)
+
+    def get_boyou_cnt(self):
+        self.check_balance()
+        # Item list
+        item_count = len(self.kiwoom.opw00018_output['multi'])
+        if item_count == 0:
+            print("보유종목이 없습니다.")
+        return item_count
+
 
     # 이익을 위한 매도주문(즉시 매도처리 이므로)을 취소하고 손실을 중지하기 위한 주문처리를 함.
     def stock_stop_loss(self):
@@ -438,15 +448,18 @@ class MyWindow(QMainWindow, form_class):
                     if self.trade_buy_stratagic(code):  # * 매수전략 적용 *
                         # 다시 해당 주식의 TR정보를 가져옮.. 상한가 오류로 인하여..
                         self.get_current_info_tr(code)
-                        buy_num_info = self.stratagy.get_buy_num_price(total_buy_money, self.kiwoom.high_price, self.kiwoom.cur_price)
-                        num = buy_num_info[0]
-                        price = buy_num_info[1]
-                        print("매수수량 : ", num, " 매수상한가 : ", price)
-                        self.kiwoom.send_order("send_order_req", "0101", account, 1, code, num, price, hoga_lookup[hoga], "") # 1: 매수, 2: 매도
-                        if self.kiwoom.order_result == 0:
-                            self._file_update(self.kiwoom.buy_loc, code, '매수전', '주문완료')
+                        if self.get_boyou_cnt() >= total_boyou_cnt:
+                            print("보유 종목이 3개 이상 입니다.")
                         else:
-                            print(self.kiwoom.order_result, ': 매수 처리 못했습니다.')
+                            buy_num_info = self.stratagy.get_buy_num_price(total_buy_money, self.kiwoom.high_price, self.kiwoom.cur_price)
+                            num = buy_num_info[0]
+                            price = buy_num_info[1]
+                            print("매수수량 : ", num, " 매수상한가 : ", price)
+                            self.kiwoom.send_order("send_order_req", "0101", account, 1, code, num, price, hoga_lookup[hoga], "") # 1: 매수, 2: 매도
+                            if self.kiwoom.order_result == 0:
+                                self._file_update(self.kiwoom.buy_loc, code, '매수전', '주문완료')
+                            else:
+                                print(self.kiwoom.order_result, ': 매수 처리 못했습니다.')
                 # time.sleep(5)
 
             if len(sell_list) == 0:
