@@ -1,4 +1,4 @@
-import sys,os,copy,json
+﻿import sys,os,copy,json
 from PyQt5.QtWidgets import *
 from PyQt5.QAxContainer import *
 from PyQt5.QtCore import *
@@ -33,8 +33,8 @@ class Kiwoom(QAxWidget):
         self.chegyeolInfo = {}  # { '날짜' : [ [ '주문구분', '매도', '주문/체결시간', '체결가' , '체결수량', '미체결수량'] ] }
         self.jongmokInfo = {} # 매매를 위한 대상 종목의 현재 정보 조회
         self.currentTime = datetime.now()
-        self.maesu_start_time = 90000
-        self.maesu_end_time = 180000
+        self.maesu_start_time = 83000
+        self.maesu_end_time = 160000
         self.buy_loc = 'stor/buy_list.txt'
         self.sell_loc = 'stor/sell_list.txt'
 
