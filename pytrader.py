@@ -85,6 +85,7 @@ class MyWindow(QMainWindow, form_class):
             #self.trade_stocks_done = True
         else:
             print("지금은 거래 가능한 시간이 아닙니다.")
+            self.kiwoom.comm_terminate()
             sys.exit(1)
 
         text_time = current_time.toString("hh:mm:ss")
@@ -135,7 +136,7 @@ class MyWindow(QMainWindow, form_class):
 
         # 한 종목에 대한 종목명, 보유량, 매입가, 현재가, 평가손익, 수익률(%)은 출력
         for j in range(item_count):
-            row = self.kiwoom.opw00018_output[j]
+            row = self.kiwoom.opw00018_output['multi'][j]
             boyou_cnt = int(row[1].replace(',', ''))
             maeip_price = int(row[2].replace(',', ''))
             cur_price = int(row[3].replace(',', ''))
@@ -359,6 +360,15 @@ class MyWindow(QMainWindow, form_class):
             #     open_price = open_price[1:]
             # print(name, ",현재가 : ", self.kiwoom.cur_price)
             result = self.stratagy.isBuyStockAvailable(code, name, self.kiwoom.cur_price, self.kiwoom.open_price, s_year_date)
+
+        # 주식 정상상태 로직 추가 2019.04.20 start
+        mste_info = self.kiwoom.get_master_construction(code)
+        if mste_info == '정상':
+            result = True
+        else:
+            result = False
+        # End
+
         return result
         # return True
 
