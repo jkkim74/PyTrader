@@ -450,7 +450,7 @@ class Kiwoom(QAxWidget):
         b_gubun = "매도"
         b_status = "매도전"
         b_price = sell_price
-        b_method = "지정가"
+        b_method = "시장가"#"지정가"
         b_qty = sell_qty
         code_info = self.get_master_code_name(code)
         mste_info = self.get_master_construction(code)

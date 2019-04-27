@@ -85,8 +85,8 @@ class MyWindow(QMainWindow, form_class):
             #self.trade_stocks_done = True
         else:
             print("지금은 거래 가능한 시간이 아닙니다.")
-            self.kiwoom.comm_terminate()
-            sys.exit(1)
+            # self.kiwoom.comm_terminate()
+            # sys.exit(1)
 
         text_time = current_time.toString("hh:mm:ss")
         time_msg = "현재시간: " + text_time
@@ -145,17 +145,23 @@ class MyWindow(QMainWindow, form_class):
             self.check_michegyoel_joomoon(stock_code)
             row2 = self.kiwoom.opw00007_output[j]
             if len(row2) > 0:
-                orgJoomoonNo  = int(row2[4]) # 원주문번호 정보를 가져온다.
-                self._file_line_delete(self.sell_loc, stock_code) # stor파일에 해당 종목을 삭제한다.
+                if row2[4] != '':
+                    orgJoomoonNo  = int(row2[4]) # 원주문번호 정보를 가져온다.
+                    self._file_line_delete(self.kiwoom.sell_loc, stock_code)  # stor파일에 해당 종목을 삭제한다.
+                else:
+                    orgJoomoonNo = ''
             else:
                 orgJoomoonNo = ""
             print("종목코드 :", stock_code, " 원주문번호 : ", orgJoomoonNo)
             mado_price = self.stratagy.get_maedo_price(maeip_price, 0.95) # 4% 익절가처리
             # 해당주식의 (이익을 얻기 위한)매도 주문 취소 처리
             # 아침에 자동 매도주문 처리가 됐을것이고 그것에 대해 취소처리를 하는 것..
-            if not self._item_stock_exist(stock_code):
-                if cur_price < mado_price: # 익절가보다 작으면 매도처리
+            # if not self._item_stock_exist(stock_code):
+            if cur_price < mado_price: # 익절가보다 작으면 매도처리
+                if orgJoomoonNo != "":
                     self.kiwoom.add_stock_sell_info(stock_code, mado_price, boyou_cnt, orgJoomoonNo)
+                else:
+                    self.add_init_stock_sell_info(stock_code, mado_price, boyou_cnt, 'S')
 
     def send_order(self):
         order_type_lookup = {'신규매수': 1, '신규매도': 2, '매수취소': 3, '매도취소': 4}
@@ -289,15 +295,18 @@ class MyWindow(QMainWindow, form_class):
             maeip_price = int(row[2].replace(',', ''))
             stock_code = row[6]
             mado_price = stratagy.get_maedo_price(maeip_price, 1.02)
-            self.add_init_stock_sell_info(stock_code, mado_price, boyou_cnt)
+            self.add_init_stock_sell_info(stock_code, mado_price, boyou_cnt, 'I')
 
     # 매도 Stor에 매도 종목 추가
-    def add_init_stock_sell_info(self,code, sell_price, sell_qty):
+    def add_init_stock_sell_info(self,code, sell_price, sell_qty, status):
         dm = ';'
         b_gubun = "매도"
         b_status = "매도전"
         b_price = sell_price
-        b_method = "지정가"
+        if status == 'I':
+            b_method = "지정가"
+        else:
+            b_method = "시장가"
         b_qty = sell_qty
         included = False
         code_info = self.kiwoom.get_master_code_name(code)
