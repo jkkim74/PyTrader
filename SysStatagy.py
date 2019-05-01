@@ -38,6 +38,8 @@ class SysStratagy():
             prev_bus_day = util.get_prev_date(1, 2, str(int(today) - 1))
             if prev_bus_day == None:
                 prev_bus_day = util.get_prev_date(1, 2, str(int(today) - 2))
+        if prev_bus_day == None:
+            return False
         s_standard_date = prev_bus_day[1]
         e_standard_date = prev_bus_day[0]
         # 대상종목의 매수가 산정을 위한 가격데이타 수집

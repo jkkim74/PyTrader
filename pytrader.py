@@ -85,8 +85,8 @@ class MyWindow(QMainWindow, form_class):
             #self.trade_stocks_done = True
         else:
             print("지금은 거래 가능한 시간이 아닙니다.")
-            # self.kiwoom.comm_terminate()
-            # sys.exit(1)
+            self.kiwoom.comm_terminate()
+            sys.exit(1)
 
         text_time = current_time.toString("hh:mm:ss")
         time_msg = "현재시간: " + text_time
@@ -372,7 +372,7 @@ class MyWindow(QMainWindow, form_class):
 
         # 주식 정상상태 로직 추가 2019.04.20 start
         mste_info = self.kiwoom.get_master_construction(code)
-        if mste_info == '정상':
+        if mste_info == '정상' and result is True:
             result = True
         else:
             result = False
