@@ -170,10 +170,8 @@ class Kiwoom(QAxWidget):
         """
         # print(util.cur_date_time() + " : REAL Data: %s %s %s" % (sCode, sRealType, sRealData))
         logger.debug(util.cur_date_time() + " : REAL Data: %s %s %s" % (sCode, sRealType, sRealData))
-        if sCode != '':
-            self.makeBasicInfo(sCode)
         if sRealType == "주식체결":
-            pass
+            self.makeBasicInfo(sCode)
     # 실시간 체결(기본) 정보
     def makeBasicInfo(self, jongmokCode):
         #주식 호가 잔량 정보 요청
