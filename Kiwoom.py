@@ -353,9 +353,9 @@ class Kiwoom(QAxWidget):
                 if (self.michegyeolInfo[self.jongmok_code ]['미체결수량']):
                     return
                     # 미체결 수량이 없으므로 정보 삭제
-            del (self.michegyeolInfo[self.jongmok_code ])
+            del (self.michegyeolInfo[self.jongmok_code])
             if (self.boyou_suryang == 0):
-                self.jangoInfo.pop(self.jongmok_code )
+                # self.jangoInfo.pop(self.jongmok_code) # KeyError로 주석처리 2019.05.08
                 # self.removeConditionOccurList(jongmok_code)
                 # else:
                 # 보유 수량이 늘었다는 것은 매수수행했다는 소리임
@@ -448,7 +448,24 @@ class Kiwoom(QAxWidget):
         b_gubun = "매도"
         b_status = "매도전"
         b_price = sell_price
-        b_method = "시장가"#"지정가"
+        b_method = "지정가"
+        b_qty = sell_qty
+        code_info = self.get_master_code_name(code)
+        mste_info = self.get_master_construction(code)
+        stock_state = self.get_master_stock_state(code)
+        print(code_info, mste_info, stock_state, orgJoomoonNo)
+
+        f = open(self.sell_loc, 'a', encoding='UTF-8')
+        stock_info = b_gubun + dm + code + dm + b_method + dm + str(b_qty) + dm + str(b_price) + dm + b_status + dm + orgJoomoonNo
+        f.write(stock_info + '\n')
+        f.close()
+
+    def add_stock_sell_info_loss(self,code, sell_price, sell_qty, orgJoomoonNo):
+        dm = ';'
+        b_gubun = "매도"
+        b_status = "매도전"
+        b_price = sell_price
+        b_method = "시장가"
         b_qty = sell_qty
         code_info = self.get_master_code_name(code)
         mste_info = self.get_master_construction(code)

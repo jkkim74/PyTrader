@@ -178,7 +178,7 @@ class MyWindow(QMainWindow, form_class):
             # 일단 주석처리 2019.05.02
             # if cur_price < mado_price: # 익절가보다 작으면 매도처리
             #     if orgJoomoonNo != "":
-            #         self.kiwoom.add_stock_sell_info(stock_code, mado_price, boyou_cnt, orgJoomoonNo)
+            #         self.kiwoom.add_stock_sell_info_loss(stock_code, mado_price, boyou_cnt, orgJoomoonNo)
             #     else:
             #         self.add_init_stock_sell_info(stock_code, mado_price, boyou_cnt, 'S')
 
