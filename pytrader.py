@@ -313,7 +313,7 @@ class MyWindow(QMainWindow, form_class):
             boyou_cnt = int(row[1].replace(',', ''))
             maeip_price = int(row[2].replace(',', ''))
             stock_code = row[6]
-            mado_price = stratagy.get_maedo_price(maeip_price, 1.02)
+            mado_price = stratagy.get_maedo_price(maeip_price, 1.03)
             self.add_init_stock_sell_info(stock_code, mado_price, boyou_cnt, 'I')
 
     # 매도 Stor에 매도 종목 추가
