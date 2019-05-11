@@ -4,6 +4,8 @@ from datetime import datetime
 import os
 import os.path
 import pandas as pd
+import requests
+from bs4 import BeautifulSoup
 
 def save_log(contents, subject="None", folder=""):
     current_dir = os.getcwd()
@@ -83,6 +85,16 @@ def get_prev_date(dif1, dif2, today):
             prev_bus_day_1 = df_mdays_list[i - dif1].__format__('%Y-%m-%d')
             prev_bus_day_2 = df_mdays_list[i - dif2].__format__('%Y-%m-%d')
             return (prev_bus_day_1, prev_bus_day_2)
+
+def get_naver_cur_stock_price(stock_cd):
+    url = "https://finance.naver.com/item/main.nhn?code="+stock_cd
+    result = requests.get(url)
+    bs_obj = BeautifulSoup(result.text, "html.parser")
+    no_today = bs_obj.find("p", {"class": "no_today"})  # 태그 p, 속성값 no_today 찾기
+    blind = no_today.find("span", {"class": "blind"})  # 태그 span, 속성값 blind 찾기
+    now_price = blind.text
+    now_price = int(now_price.replace(',', ''))
+    return now_price
 
 # --------------------------------------------------------
 # 변환 관련 유틸

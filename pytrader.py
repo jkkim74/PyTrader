@@ -55,12 +55,20 @@ class MyWindow(QMainWindow, form_class):
         self.timer4 = QTimer(self)
         self.timer4.start(1000 * 4)
 
+        # Naver에서 현재가 가져오기
+        self.timer_naver = QTimer(self)
+        self.timer_naver.start(1000 * 4)
+
         # 계좌정보 넣어줌
         accouns_num = int(self.kiwoom.get_login_info("ACCOUNT_CNT"))
         accounts = self.kiwoom.get_login_info("ACCNO")
         accounts_list = accounts.split(';')[0:accouns_num]
         self.comboBox.addItems(accounts_list)
 
+        # 보유 종목정보
+        self.check_balance()
+        self.boyou_stock_list = self.kiwoom.opw00018_output['multi']
+        # self.boyou_stock_list.append(['삼성전자', '100', '40000', '42000', '200000', '5', '005930'])
         # 보유 주식 매도 주문 아침9시전에 구동시에 보유주식에 대한 매도주문처리
         self.init_boyou_mado()
 
@@ -72,6 +80,7 @@ class MyWindow(QMainWindow, form_class):
         self.timer2.timeout.connect(self.timeout2)
         self.timer3.timeout.connect(self.timeout3)
         self.timer4.timeout.connect(self.timeout4)  # stop loss 처리
+        self.timer_naver.timeout.connect(self.timeout_naver)
         self.lineEdit.textChanged.connect(self.code_changed)
         self.pushButton.clicked.connect(self.send_order)
         self.pushButton_2.clicked.connect(
@@ -125,6 +134,19 @@ class MyWindow(QMainWindow, form_class):
     def timeout4(self):
         if self.checkBox_3.isChecked():  # 일단주석처리.
             self.stock_stop_loss()
+
+    def timeout_naver(self):
+        self.cur_stock_price_naver()
+
+    def cur_stock_price_naver(self):
+        for key in range(len(self.boyou_stock_list)):
+            row = self.boyou_stock_list[key]
+            # boyou_cnt = int(row[1].replace(',', ''))
+            # maeip_price = int(row[2].replace(',', ''))
+            # cur_price = int(row[3].replace(',', ''))
+            stock_code = row[6]
+            cur_price = util.get_naver_cur_stock_price(stock_code)
+            print(stock_code,cur_price)
 
     def code_changed(self):
         code = self.lineEdit.text()
