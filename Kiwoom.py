@@ -412,6 +412,7 @@ class Kiwoom(QAxWidget):
                 sell_price = sysStatagy.get_maedo_price(self.maeip_danga, 1.02)
                 sell_qty = self.boyou_suryang
                 self.add_stock_sell_info(self.jongmok_code, sell_price, sell_qty, "")
+                self.check_balance() ## 현재 보유잔고 정보 저장
 
             pass
         elif (gubun == "0"):
@@ -532,6 +533,23 @@ class Kiwoom(QAxWidget):
         with open(JANGO_INFO_FILE_PATH, 'a', encoding = 'utf8' ) as f:
             f.write(json.dumps(temp, ensure_ascii= False, indent= 2, sort_keys = True ))
         pass
+
+    def check_balance(self):
+        self.reset_opw00018_output()
+        account_number = self.get_login_info("ACCNO")
+        account_number = account_number.split(';')[0]  # 첫번째 계좌번호 호출
+
+        self.set_input_value("계좌번호", account_number)
+        self.comm_rq_data("opw00018_req", "opw00018", 0, "2000")
+
+        while self.remained_data:
+            time.sleep(2)
+            self.set_input_value("계좌번호", account_number)
+            self.comm_rq_data("opw00018_req", "opw00018", 2, "2000")
+
+        # opw00001
+        self.set_input_value("계좌번호", account_number)
+        self.comm_rq_data("opw00001_req", "opw00001", 0, "2000")
 
 
 if __name__ == "__main__":

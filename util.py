@@ -96,6 +96,14 @@ def get_naver_cur_stock_price(stock_cd):
     now_price = int(now_price.replace(',', ''))
     return now_price
 
+def list_diff(li1, li2):
+    li3 = (list(set(li1) - set(li2)))
+    li4 = (list(set(li2) - set(li1)))
+    if len(li3 + li4) > 0:
+        return True
+    else:
+        return False
+
 # --------------------------------------------------------
 # 변환 관련 유틸
 # --------------------------------------------------------
