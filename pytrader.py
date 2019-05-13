@@ -111,8 +111,8 @@ class MyWindow(QMainWindow, form_class):
             # self.trade_stocks_done = True
         else:
             print("지금은 거래 가능한 시간이 아닙니다.")
-            # self.kiwoom.comm_terminate()
-            # sys.exit(1)
+            self.kiwoom.comm_terminate()
+            sys.exit(1)
 
         text_time = current_time.toString("hh:mm:ss")
         time_msg = "현재시간: " + text_time
@@ -144,6 +144,8 @@ class MyWindow(QMainWindow, form_class):
         self.chg_boyou_stock_list = self.kiwoom.opw00018_output['multi']
         # 초기에 보유주식과 매수/매도가 발생시 보유 주식이 다를 수 있으므로
         # 이렇게 처리함..
+        print("== cur_stock_price_naver ==")
+        print(self.init_boyou_stock_list, self.chg_boyou_stock_list)
         if util.list_diff(self.init_boyou_stock_list, self.chg_boyou_stock_list):
             self.boyou_stock_list = self.chg_boyou_stock_list
         for key in range(len(self.boyou_stock_list)):
@@ -152,11 +154,11 @@ class MyWindow(QMainWindow, form_class):
             maeip_price = int(row[2].replace(',', ''))
             # cur_price = int(row[3].replace(',', ''))
             stock_code = row[6]
-            mado_price = self.stratagy.get_maedo_price(maeip_price, 0.95)  # 5% 익절가처리
+            mado_price = self.stratagy.get_maedo_price(maeip_price, 0.98)  # 5% 익절가처리
             cur_price = util.get_naver_cur_stock_price(stock_code)
-            logger.debug(util.cur_date_time() +'보유주식명:'+row[0]+',주식코드:'+stock_code + ',현재가:' + cur_price+',예상 손절가:'+mado_price)
+            logger.debug(util.cur_date_time() +'보유주식명:'+row[0]+',주식코드:'+stock_code + ',현재가:' + str(cur_price)+',예상 손절가:'+str(mado_price))
             if cur_price <= mado_price:
-                logger.debug(util.cur_date_time() +'손절프로세스 진행===>보유주식명:'+row[0]+',주식코드:'+stock_code + ',현재가:' + cur_price+',예상 손절가:'+mado_price)
+                logger.debug(util.cur_date_time() +'손절프로세스 진행===>보유주식명:'+row[0]+',주식코드:'+stock_code + ',현재가:' + str(cur_price)+',예상 손절가:'+str(mado_price))
                 self.stock_stop_loss(stock_code)
 
     def code_changed(self):
@@ -175,12 +177,13 @@ class MyWindow(QMainWindow, form_class):
     # 이익을 위한 매도주문(즉시 매도처리 이므로)을 취소하고 손실을 중지하기 위한 주문처리를 함.
     def stock_stop_loss(self, t_stock_code):
         logger.debug("=== stock_stop_loss ===")
-        print("손실에 대한 loss 처리 설정했습니다.")
+        logger.debug("손실에 대한 loss 처리 설정했습니다.")
         self.check_balance()
         # Item list
         item_count = len(self.kiwoom.opw00018_output['multi'])
+        logger.debug("itemCount ==> "+str(item_count))
         if item_count == 0:
-            print("보유종목이 없습니다.")
+            logger.debug("보유종목이 없습니다.")
 
         # 한 종목에 대한 종목명, 보유량, 매입가, 현재가, 평가손익, 수익률(%)은 출력
         for j in range(item_count):
@@ -204,7 +207,7 @@ class MyWindow(QMainWindow, form_class):
                     orgJoomoonNo = ""
             logger.debug(util.cur_date_time() + ":보유주식수/ 매입가/주식코드/원주문번호: %s %s %s %s" % (
             boyou_cnt, maeip_price, stock_code, orgJoomoonNo))
-            
+
             # if orgJoomoonNo != "":
             #     self.kiwoom.add_stock_sell_info_loss(stock_code, 0, boyou_cnt, orgJoomoonNo)
             # else:

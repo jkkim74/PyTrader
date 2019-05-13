@@ -261,7 +261,8 @@ class Kiwoom(QAxWidget):
             joomoon_no = self._comm_get_data(trcode, "", rqname, i, "주문번호")
             joomoon_qty = Kiwoom.change_format(joomoon_qty)
             joomoon_price = Kiwoom.change_format(joomoon_price)
-
+            logger.debug("_opw00007_주문번호_"+joomoon_no)
+            logger.debug((joomoon_code, name, joomoon_qty, joomoon_price, joomoon_code, joomoon_no))
             self.opw00007_output.append([joomoon_code, name, joomoon_qty, joomoon_price, joomoon_code, joomoon_no])
 
     def _opw00018(self, rqname, trcode):
