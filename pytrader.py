@@ -111,8 +111,8 @@ class MyWindow(QMainWindow, form_class):
             # self.trade_stocks_done = True
         else:
             print("지금은 거래 가능한 시간이 아닙니다.")
-            self.kiwoom.comm_terminate()
-            sys.exit(1)
+            # self.kiwoom.comm_terminate()
+            # sys.exit(1)
 
         text_time = current_time.toString("hh:mm:ss")
         time_msg = "현재시간: " + text_time
@@ -144,8 +144,8 @@ class MyWindow(QMainWindow, form_class):
         self.chg_boyou_stock_list = self.kiwoom.opw00018_output['multi']
         # 초기에 보유주식과 매수/매도가 발생시 보유 주식이 다를 수 있으므로
         # 이렇게 처리함..
-        print("== cur_stock_price_naver ==")
-        print(self.init_boyou_stock_list, self.chg_boyou_stock_list)
+        logger.debug("== cur_stock_price_naver ==")
+        logger.debug((self.init_boyou_stock_list, self.chg_boyou_stock_list))
         if util.list_diff(self.init_boyou_stock_list, self.chg_boyou_stock_list):
             self.boyou_stock_list = self.chg_boyou_stock_list
         for key in range(len(self.boyou_stock_list)):
