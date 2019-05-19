@@ -118,8 +118,8 @@ class MyWindow(QMainWindow, form_class):
             # self.trade_stocks_done = True
         else:
             print("지금은 거래 가능한 시간이 아닙니다.")
-            # self.kiwoom.comm_terminate()
-            # sys.exit(1)
+            self.kiwoom.comm_terminate()
+            sys.exit(1)
 
         text_time = current_time.toString("hh:mm:ss")
         time_msg = "현재시간: " + text_time
@@ -179,11 +179,17 @@ class MyWindow(QMainWindow, form_class):
             maeip_price = bstock[2] # 매입단가
             maeip_qtr = bstock[3] # 매입수
             stop_price = self.stratagy.get_maedo_price(maeip_price, 0.95)  # -5% 손절가
+            dest_price = self.stratagy.get_maedo_price(maeip_price, 1.03)  # 목표가 도달시
             cur_price = util.get_naver_cur_stock_price(stock_cd) # 네이버에서 가져온 현재가
             logger.debug(util.cur_date_time() +'보유주식명:'+stock_nm+',주식코드:'+stock_cd + ',현재가:' + str(cur_price)+',예상 손절가:'+str(stop_price))
             if cur_price <= stop_price:
-                logger.debug(util.cur_date_time() +'손절프로세스 진행===>보유주식명:'+stock_nm+',주식코드:'+stock_cd + ',현재가:' + str(cur_price)+',예상 손절가:'+str(stop_price))
-                self.stock_stop_loss(stock_cd, maeip_qtr, stop_price)
+                logger.debug(util.cur_date_time() +'손절 프로세스 진행 ===> 보유주식명:'+stock_nm+',주식코드:'+stock_cd + ',현재가:' + str(cur_price)+',예상 손절가:'+str(stop_price))
+                # self.stock_stop_loss(stock_cd, maeip_qtr, stop_price)
+                self.add_init_stock_sell_info(stock_cd, dest_price, maeip_qtr, 'S')
+            elif cur_price >= dest_price:
+                logger.debug(util.cur_date_time() + '이익 매도 프로세스 진행 ===> 보유주식명:' + stock_nm + ',주식코드:' + stock_cd + ',현재가:' + str(cur_price) + ',예상 손절가:' + str(stop_price))
+                self.add_init_stock_sell_info(stock_cd, dest_price, maeip_qtr, 'I')
+
 
     # 이익을 위한 매도주문(즉시 매도처리 이므로)을 취소하고 손실을 중지하기 위한 주문처리를 함.
     def stock_stop_loss(self, t_stock_code, num, price):

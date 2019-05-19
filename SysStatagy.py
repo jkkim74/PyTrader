@@ -34,7 +34,7 @@ class SysStratagy():
         today_f = datetime.today().strftime("%Y%m%d")
         prev_bus_day = util.get_prev_date(1, 2, today)
         if prev_bus_day == None:
-            print('매수일이 아닙니다.')
+            print('거래 가능한 날짜가 아닙니다.')
             prev_bus_day = util.get_prev_date(1, 2, str(int(today) - 1))
             if prev_bus_day == None:
                 prev_bus_day = util.get_prev_date(1, 2, str(int(today) - 2))
