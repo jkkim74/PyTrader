@@ -6,6 +6,8 @@ from Kiwoom import *
 from SysStatagy import *
 import logging
 from logging import FileHandler
+## 보유주식정보 JSON에 저장 ##
+from stockJsonUtil import *
 
 form_class = uic.loadUiType("pytrader.ui")[0]
 test_invest = True
@@ -76,6 +78,10 @@ class MyWindow(QMainWindow, form_class):
 
         # 매도/매수 리스트 조회
         self.load_buy_sell_list()
+        
+        # 보유주식정보 json으로 저장
+        self.boyoustock = BoyouStock()
+        self.boyou_stock_save_json()
 
         # 이벤트 정보 연결
         self.timer.timeout.connect(self.timeout)
@@ -140,73 +146,100 @@ class MyWindow(QMainWindow, form_class):
     def timeout_naver(self):
         self.cur_stock_price_naver()
 
+    def boyou_stock_save_json(self):
+        if len(self.init_boyou_stock_list) > 0:
+            init_stock_list=[]
+            self.boyoustock.updateBoyouStockInfo(init_stock_list)
+            for key in range(len(self.init_boyou_stock_list)):
+                row = self.boyou_stock_list[key]
+                boyou_cnt = int(row[1].replace(',', ''))
+                maeip_price = int(row[2].replace(',', ''))
+                # cur_price = int(row[3].replace(',', ''))
+                stock_code = row[6]
+                stock_name = row[0]
+                mado_price = self.stratagy.get_maedo_price(maeip_price, 0.95)  # 5% 손절가처리
+                sell_price = self.stratagy.get_maedo_price(maeip_price, 1.03)  # 목표가 처리
+                self.boyoustock.stock_buy([stock_code, stock_name, maeip_price, boyou_cnt, sell_price, mado_price])
+
     def cur_stock_price_naver(self):
-        self.chg_boyou_stock_list = self.kiwoom.opw00018_output['multi']
-        # 초기에 보유주식과 매수/매도가 발생시 보유 주식이 다를 수 있으므로
-        # 이렇게 처리함..
-        logger.debug("== cur_stock_price_naver ==")
-        logger.debug((self.init_boyou_stock_list, self.chg_boyou_stock_list))
-        if util.list_diff(self.init_boyou_stock_list, self.chg_boyou_stock_list):
-            self.boyou_stock_list = self.chg_boyou_stock_list
+        # self.chg_boyou_stock_list = self.kiwoom.opw00018_output['multi']
+        # # 초기에 보유주식과 매수/매도가 발생시 보유 주식이 다를 수 있으므로
+        # # 이렇게 처리함..
+        # logger.debug("== cur_stock_price_naver ==")
+        # logger.debug((self.init_boyou_stock_list, self.chg_boyou_stock_list))
+        # if util.list_diff(self.init_boyou_stock_list, self.chg_boyou_stock_list):
+        #     self.boyou_stock_list = self.chg_boyou_stock_list
+        self.boyou_stock_list = self.boyoustock.readBoyouStockInfo()
         for key in range(len(self.boyou_stock_list)):
-            row = self.boyou_stock_list[key]
-            boyou_cnt = int(row[1].replace(',', ''))
-            maeip_price = int(row[2].replace(',', ''))
-            # cur_price = int(row[3].replace(',', ''))
-            stock_code = row[6]
-            mado_price = self.stratagy.get_maedo_price(maeip_price, 0.98)  # 5% 익절가처리
-            cur_price = util.get_naver_cur_stock_price(stock_code)
-            logger.debug(util.cur_date_time() +'보유주식명:'+row[0]+',주식코드:'+stock_code + ',현재가:' + str(cur_price)+',예상 손절가:'+str(mado_price))
-            if cur_price <= mado_price:
-                logger.debug(util.cur_date_time() +'손절프로세스 진행===>보유주식명:'+row[0]+',주식코드:'+stock_code + ',현재가:' + str(cur_price)+',예상 손절가:'+str(mado_price))
-                self.stock_stop_loss(stock_code)
-
-    def code_changed(self):
-        code = self.lineEdit.text()
-        name = self.kiwoom.get_master_code_name(code)
-        self.lineEdit_2.setText(name)
-
-    def get_boyou_cnt(self):
-        self.check_balance()
-        # Item list
-        item_count = len(self.kiwoom.opw00018_output['multi'])
-        if item_count == 0:
-            print("보유종목이 없습니다.")
-        return item_count
+            bstock = self.boyou_stock_list[key]
+            stock_cd = bstock[0] # 주식코드
+            stock_nm = bstock[1] # 주식명
+            maeip_price = bstock[2] # 매입단가
+            maeip_qtr = bstock[3] # 매입수
+            stop_price = self.stratagy.get_maedo_price(maeip_price, 0.95)  # -5% 손절가
+            cur_price = util.get_naver_cur_stock_price(stock_cd) # 네이버에서 가져온 현재가
+            logger.debug(util.cur_date_time() +'보유주식명:'+stock_nm+',주식코드:'+stock_cd + ',현재가:' + str(cur_price)+',예상 손절가:'+str(stop_price))
+            if cur_price <= stop_price:
+                logger.debug(util.cur_date_time() +'손절프로세스 진행===>보유주식명:'+stock_nm+',주식코드:'+stock_cd + ',현재가:' + str(cur_price)+',예상 손절가:'+str(stop_price))
+                self.stock_stop_loss(stock_cd, maeip_qtr, stop_price)
 
     # 이익을 위한 매도주문(즉시 매도처리 이므로)을 취소하고 손실을 중지하기 위한 주문처리를 함.
-    def stock_stop_loss(self, t_stock_code):
-        logger.debug("=== stock_stop_loss ===")
-        logger.debug("손실에 대한 loss 처리 설정했습니다.")
+    def stock_stop_loss(self, t_stock_code, num, price):
+        is_existed_stock = False
         self.check_balance()
-        # Item list
         item_count = len(self.kiwoom.opw00018_output['multi'])
-        logger.debug("itemCount ==> "+str(item_count))
+        logger.debug("itemCount ==> " + str(item_count))
         if item_count == 0:
             logger.debug("보유종목이 없습니다.")
 
         # 한 종목에 대한 종목명, 보유량, 매입가, 현재가, 평가손익, 수익률(%)은 출력
         for j in range(item_count):
             row = self.kiwoom.opw00018_output['multi'][j]
-            boyou_cnt = int(row[1].replace(',', ''))
-            maeip_price = int(row[2].replace(',', ''))
-            cur_price = int(row[3].replace(',', ''))
             stock_code = row[6]
-            logger.debug(util.cur_date_time() + "현재보유주식코드=>"+stock_code+",손절주식코드=>"+t_stock_code)
-            if stock_code == t_stock_code:
-                # 보유종목의 이익매도 주문이 있는 경우 이익매도주문 취소후 익절처리
-                self.check_michegyoel_joomoon(stock_code)
-                row2 = self.kiwoom.opw00007_output[j]
-                if len(row2) > 0:
-                    if row2[5] != '':
-                        orgJoomoonNo = int(row2[5])  # 원주문번호 정보를 가져온다.
-                        self._file_line_delete(self.kiwoom.sell_loc, stock_code)  # stor파일에 해당 종목을 삭제한다.
-                    else:
-                        orgJoomoonNo = ''
-                else:
-                    orgJoomoonNo = ""
-            logger.debug(util.cur_date_time() + ":보유주식수/ 매입가/주식코드/원주문번호: %s %s %s %s" % (
-            boyou_cnt, maeip_price, stock_code, orgJoomoonNo))
+            if t_stock_code == stock_code:
+                is_existed_stock = True
+
+        if is_existed_stock:
+            order_type_lookup = {'신규매수': 1, '신규매도': 2, '매수취소': 3, '매도취소': 4}
+            hoga_lookup = {'지정가': "00", '시장가': "03"}
+
+            account = self.comboBox.currentText()
+
+            self.kiwoom.send_order("send_order_req", "0101", account, order_type_lookup['신규매도'], t_stock_code, num, price,
+                                   hoga_lookup['시장가'], "")
+        else:
+            print("이미 매도 되었거나 매수되지 않은 주식입니다.")
+
+        # logger.debug("=== stock_stop_loss ===")
+        # logger.debug("손실에 대한 loss 처리 설정했습니다.")
+        # self.check_balance()
+        # # Item list
+        # item_count = len(self.kiwoom.opw00018_output['multi'])
+        # logger.debug("itemCount ==> " + str(item_count))
+        # if item_count == 0:
+        #     logger.debug("보유종목이 없습니다.")
+        #
+        # # 한 종목에 대한 종목명, 보유량, 매입가, 현재가, 평가손익, 수익률(%)은 출력
+        # for j in range(item_count):
+        #     row = self.kiwoom.opw00018_output['multi'][j]
+        #     boyou_cnt = int(row[1].replace(',', ''))
+        #     maeip_price = int(row[2].replace(',', ''))
+        #     cur_price = int(row[3].replace(',', ''))
+        #     stock_code = row[6]
+        #     logger.debug(util.cur_date_time() + "현재보유주식코드=>" + stock_code + ",손절주식코드=>" + t_stock_code)
+        #     if stock_code == t_stock_code:
+        #         # 보유종목의 이익매도 주문이 있는 경우 이익매도주문 취소후 익절처리
+        #         self.check_michegyoel_joomoon(stock_code)
+        #         row2 = self.kiwoom.opw00007_output[j]
+        #         if len(row2) > 0:
+        #             if row2[5] != '':
+        #                 orgJoomoonNo = int(row2[5])  # 원주문번호 정보를 가져온다.
+        #                 self._file_line_delete(self.kiwoom.sell_loc, stock_code)  # stor파일에 해당 종목을 삭제한다.
+        #             else:
+        #                 orgJoomoonNo = ''
+        #         else:
+        #             orgJoomoonNo = ""
+            # logger.debug(util.cur_date_time() + ":보유주식수/ 매입가/주식코드/원주문번호: %s %s %s %s" % (boyou_cnt, maeip_price, stock_code, orgJoomoonNo))
 
             # if orgJoomoonNo != "":
             #     self.kiwoom.add_stock_sell_info_loss(stock_code, 0, boyou_cnt, orgJoomoonNo)
@@ -227,6 +260,19 @@ class MyWindow(QMainWindow, form_class):
             #         self.kiwoom.add_stock_sell_info_loss(stock_code, mado_price, boyou_cnt, orgJoomoonNo)
             #     else:
             #         self.add_init_stock_sell_info(stock_code, mado_price, boyou_cnt, 'S')
+
+    def code_changed(self):
+        code = self.lineEdit.text()
+        name = self.kiwoom.get_master_code_name(code)
+        self.lineEdit_2.setText(name)
+
+    def get_boyou_cnt(self):
+        self.check_balance()
+        # Item list
+        item_count = len(self.kiwoom.opw00018_output['multi'])
+        if item_count == 0:
+            print("보유종목이 없습니다.")
+        return item_count
 
     def send_order(self):
         order_type_lookup = {'신규매수': 1, '신규매도': 2, '매수취소': 3, '매도취소': 4}

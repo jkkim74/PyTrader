@@ -10,6 +10,8 @@ import jk_util, util
 from SysStatagy import *
 import logging
 from logging import FileHandler
+# json파일에 저장
+from stockJsonUtil import *
 
 TR_REQ_TIME_INTERVAL = 0.2
 # 로그 파일 핸들러
@@ -37,6 +39,8 @@ class Kiwoom(QAxWidget):
         self.maesu_end_time = 160000
         self.buy_loc = 'stor/buy_list.txt'
         self.sell_loc = 'stor/sell_list.txt'
+        # 매수/매도시 처리를 위해 추가함. 2019.05.19
+        self.boyoustock = BoyouStock()
 
 
     @staticmethod
@@ -343,12 +347,12 @@ class Kiwoom(QAxWidget):
             self.maeip_danga = int(self.get_chejan_data(jk_util.name_fid['매입단가']))
             jongmok_name = self.get_chejan_data(jk_util.name_fid['종목명']).strip()
             current_price = abs(int(self.get_chejan_data(jk_util.name_fid['현재가'])))
-            print('종목코드 : ', self.jongmok_code)
-            print('보유수량 : ', self.boyou_suryang)
-            print('주문가능수량 : ', self.jumun_ganeung_suryang)
-            print('매입단가 : ', self.maeip_danga)
-            print('종목명 : ', jongmok_name)
-            print('현재가 : ', current_price)
+            logger.debug(util.cur_date_time() + '종목코드 : ' + self.jongmok_code)
+            logger.debug(util.cur_date_time() + '보유수량 : ' + self.boyou_suryang)
+            logger.debug(util.cur_date_time() + '주문가능수량 : '+ self.jumun_ganeung_suryang)
+            logger.debug(util.cur_date_time() + '매입단가 : '+ self.maeip_danga)
+            logger.debug(util.cur_date_time() + '종목명 : '+ jongmok_name)
+            logger.debug(util.cur_date_time() + '현재가 : '+ current_price)
             # 미체결 수량이 있는 경우 잔고 정보 저장하지 않도록 함
             if (self.jongmok_code  in self.michegyeolInfo):
                 if (self.michegyeolInfo[self.jongmok_code ]['미체결수량']):
@@ -414,6 +418,15 @@ class Kiwoom(QAxWidget):
                 sell_qty = self.boyou_suryang
                 self.add_stock_sell_info(self.jongmok_code, sell_price, sell_qty, "")
                 self.check_balance() ## 현재 보유잔고 정보 저장
+                # 매수시, 보유주식정보 boyouStock.json에 추가
+                stop_price = sysStatagy.get_maedo_price(self.maeip_danga, 0.95) # 손절가
+                self.boyoustock.stock_buy([self.jongmok_code,jongmok_name.strip(), self.maeip_danga, self.boyou_suryang, sell_price, stop_price]) # json파일에 매수종목 추가
+
+            if self.michegyeol_suryang == 0 and self.maedo_maesu_gubun == "1":
+                # 매도시, 보유주식정보 boyouStock.json에서 제외
+                sell_price = sysStatagy.get_maedo_price(self.maeip_danga, 1.02)
+                stop_price = sysStatagy.get_maedo_price(self.maeip_danga, 0.95)  # 손절가
+                self.boyoustock.stock_sell([self.jongmok_code, jongmok_name.strip(), self.maeip_danga, self.boyou_suryang, sell_price, stop_price])  # json파일에 매수종목 추가
 
             pass
         elif (gubun == "0"):
