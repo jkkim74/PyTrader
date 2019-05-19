@@ -24,7 +24,9 @@ class BoyouStock:
     def readBoyouStockInfo(self):
         with open(boyou_stock_file,'rt',encoding='utf-8') as stock_json:
             stock_data = json.load(stock_json)
-        logger.debug('boyouStock Info : ' + str(stock_data))
+        logger.debug('########################## boyouStock Info start ####################### ')
+        logger.debug(str(stock_data))
+        logger.debug('########################## boyouStock Info end   ####################### ')
         return stock_data['s_datail']
 
 
