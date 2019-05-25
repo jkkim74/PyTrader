@@ -329,7 +329,7 @@ class Kiwoom(QAxWidget):
         return ret
 
     def _receive_chejan_data(self, gubun, item_cnt, fid_list):
-        # print(gubun)
+		# print(gubun)
         # print(self.get_chejan_data(9203))
         # print(self.get_chejan_data(302))
         # print(self.get_chejan_data(900))
@@ -412,6 +412,7 @@ class Kiwoom(QAxWidget):
             # # self.makeEtcJangoInfo(self.jongmok_code)
             # self.makeJangoInfoFile()
             # 미체결수량이 0이고 매수인 경우, 확정매도 처리
+
             if self.michegyeol_suryang == 0 and self.maedo_maesu_gubun == "2":
                 sysStatagy = SysStratagy()
                 sell_price = sysStatagy.get_maedo_price(self.maeip_danga, 1.02)
@@ -423,6 +424,7 @@ class Kiwoom(QAxWidget):
                 self.boyoustock.stock_buy([self.jongmok_code,jongmok_name.strip(), self.maeip_danga, self.boyou_suryang, sell_price, stop_price]) # json파일에 매수종목 추가
 
             if self.michegyeol_suryang == 0 and self.maedo_maesu_gubun == "1":
+                sysStatagy = SysStratagy()
                 # 매도시, 보유주식정보 boyouStock.json에서 제외
                 sell_price = sysStatagy.get_maedo_price(self.maeip_danga, 1.02)
                 stop_price = sysStatagy.get_maedo_price(self.maeip_danga, 0.95)  # 손절가
