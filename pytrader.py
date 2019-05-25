@@ -162,6 +162,9 @@ class MyWindow(QMainWindow, form_class):
                 mado_price = self.stratagy.get_maedo_price(maeip_price, 0.95)  # 5% 손절가처리
                 sell_price = self.stratagy.get_maedo_price(maeip_price, 1.03)  # 목표가 처리
                 self.boyoustock.stock_buy([stock_code, stock_name, maeip_price, boyou_cnt, sell_price, mado_price])
+        else:
+            init_stock_list = []
+            self.boyoustock.updateBoyouStockInfo(init_stock_list)
 
     def cur_stock_price_naver(self):
         # self.chg_boyou_stock_list = self.kiwoom.opw00018_output['multi']
