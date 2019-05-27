@@ -1,3 +1,5 @@
+import sys
+from PyQt5.QtWidgets import *
 import json
 from datetime import datetime
 from logger import *
@@ -42,7 +44,10 @@ class BoyouStock:
             stock_data = json.load(stock_json)
         if len(stock_data) > 0:
             stock_list = stock_data['s_datail']
-            del stock_list[stock_list.index(maedo_stock)]
+            if len(stock_list) > 0:
+                for key in range(len(stock_list)):
+                    if stock_list[key][0] == maedo_stock[0]:
+                        del stock_list[key]
             self.updateBoyouStockInfo(stock_list)
         else:
             print('보유 종목이 없습니다.')
@@ -56,3 +61,8 @@ class BoyouStock:
     # # boyou_stock_list=[]
     # # updateBoyouStockInfo(boyou_stock_list)
     # readBoyouStockInfo(boyou_stock_file)
+# if __name__ == "__main__":
+#     app = QApplication(sys.argv)
+#     stock_info = ['121890', '에스디시스템', 3747, 4000, 3825, 3565]
+#     boyouStock = BoyouStock()
+#     boyouStock.stock_sell(stock_info)
