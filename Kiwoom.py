@@ -41,6 +41,7 @@ class Kiwoom(QAxWidget):
         self.sell_loc = 'stor/sell_list.txt'
         # 매수/매도시 처리를 위해 추가함. 2019.05.19
         self.boyoustock = BoyouStock()
+        self.sysStatagy = SysStratagy()
 
 
     @staticmethod
@@ -414,20 +415,18 @@ class Kiwoom(QAxWidget):
             # 미체결수량이 0이고 매수인 경우, 확정매도 처리
 
             if self.michegyeol_suryang == 0 and self.maedo_maesu_gubun == "2":
-                sysStatagy = SysStratagy()
-                sell_price = sysStatagy.get_maedo_price(self.maeip_danga, 1.02)
-                sell_qty = self.boyou_suryang
-                self.add_stock_sell_info(self.jongmok_code, sell_price, sell_qty, "")
+                sell_price = self.sysStatagy.get_maedo_price(self.maeip_danga, 1.03)
+                # sell_qty = self.boyou_suryang
+                # self.add_stock_sell_info(self.jongmok_code, sell_price, sell_qty, "")
                 self.check_balance() ## 현재 보유잔고 정보 저장
                 # 매수시, 보유주식정보 boyouStock.json에 추가
-                stop_price = sysStatagy.get_maedo_price(self.maeip_danga, 0.95) # 손절가
+                stop_price = self.sysStatagy.get_maedo_price(self.maeip_danga, 0.95) # 손절가
                 self.boyoustock.stock_buy([self.jongmok_code,jongmok_name.strip(), self.maeip_danga, self.boyou_suryang, sell_price, stop_price]) # json파일에 매수종목 추가
 
             if self.michegyeol_suryang == 0 and self.maedo_maesu_gubun == "1":
-                sysStatagy = SysStratagy()
                 # 매도시, 보유주식정보 boyouStock.json에서 제외
-                sell_price = sysStatagy.get_maedo_price(self.maeip_danga, 1.02)
-                stop_price = sysStatagy.get_maedo_price(self.maeip_danga, 0.95)  # 손절가
+                sell_price = self.sysStatagy.get_maedo_price(self.maeip_danga, 1.03)
+                stop_price = self.sysStatagy.get_maedo_price(self.maeip_danga, 0.95)  # 손절가
                 self.boyoustock.stock_sell([self.jongmok_code, jongmok_name.strip(), self.maeip_danga, self.boyou_suryang, sell_price, stop_price])  # json파일에 매수종목 추가
 
             pass
