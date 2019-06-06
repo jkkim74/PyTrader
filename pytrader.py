@@ -11,7 +11,7 @@ from stockJsonUtil import *
 
 form_class = uic.loadUiType("pytrader.ui")[0]
 test_invest = True
-total_boyou_cnt = 3  # 전체 보유 카운트
+total_boyou_cnt = 5  # 전체 보유 카운트
 if test_invest:
     total_buy_money = 15000000
 else:

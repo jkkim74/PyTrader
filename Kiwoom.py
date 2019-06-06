@@ -174,7 +174,7 @@ class Kiwoom(QAxWidget):
         :return:
         """
         # print(util.cur_date_time() + " : REAL Data: %s %s %s" % (sCode, sRealType, sRealData))
-        logger.debug(util.cur_date_time() + " : REAL Data: %s %s %s" % (sCode, sRealType, sRealData))
+        # logger.debug(util.cur_date_time() + " : REAL Data: %s %s %s" % (sCode, sRealType, sRealData))
         if sRealType == "주식체결":
             self.makeBasicInfo(sCode)
     # 실시간 체결(기본) 정보
@@ -363,75 +363,75 @@ class Kiwoom(QAxWidget):
             logger.debug('#####################미체결수량 정보 조회 end ##########################')
             logger.debug('_receive_chejan_data_4')
             # 미체결 수량이 있는 경우 잔고 정보 저장하지 않도록 함
-            if (self.jongmok_code  in self.michegyeolInfo):
-                if (self.michegyeolInfo[self.jongmok_code ]['미체결수량']):
-                    logger.debug('_receive_chejan_data_5')
-                    logger.debug('..여기 타는지 확인함..')
-                    return
-                    # 미체결 수량이 없으므로 정보 삭제
-            del (self.michegyeolInfo[self.jongmok_code])
-            logger.debug('_receive_chejan_data_6')
-            if (self.boyou_suryang == 0):
-                # self.jangoInfo.pop(self.jongmok_code) # KeyError로 주석처리 2019.05.08
-                # self.removeConditionOccurList(jongmok_code)
-                # else:
-                # 보유 수량이 늘었다는 것은 매수수행했다는 소리임
-                #   self.sigBuy.emit()
-
-                # 아래 잔고 정보의 경우 TR:계좌평가잔고내역요청 필드와 일치하게 만들어야 함
-                logger.debug('_receive_chejan_data_7')
-                current_jango = {}
-                current_jango['보유수량'] = self.boyou_suryang
-                current_jango['매매가능수량'] = self.jumun_ganeung_suryang  # TR 잔고에서 매매가능 수량 이란 이름으로 사용되므로
-                current_jango['매입가'] = self.maeip_danga
-                current_jango['종목번호'] = self.jongmok_code
-                current_jango['종목명'] = jongmok_name.strip()
-                chegyeol_info = util.cur_date_time('%Y%m%d%H%M%S') + ":" + str(current_price)
-                logger.debug('_receive_chejan_data_8')
-                logger.debug('#####################체결 정보 조회 start ########################')
-                logger.debug(chegyeol_info)
-                logger.debug('#####################체결 정보 조회 end ##########################')
-                if (self.jongmok_code  not in self.jangoInfo):
-                    logger.debug('_receive_chejan_data_9')
-                    current_jango['주문/체결시간'] = [util.cur_date_time('%Y%m%d%H%M%S')]
-                    current_jango['체결가/체결시간'] = [chegyeol_info]
-                    current_jango['최근매수가'] = [current_price]
-                    current_jango['매수횟수'] = 1
-
-                    self.jangoInfo[self.jongmok_code] = current_jango
-
-                else:
-                    logger.debug('_receive_chejan_data_10')
-                    chegyeol_time_list = self.jangoInfo[self.jongmok_code]['주문/체결시간']
-                    chegyeol_time_list.append(util.cur_date_time('%Y%m%d%H%M%S'))
-                    current_jango['주문/체결시간'] = chegyeol_time_list
-
-                    last_chegyeol_info = self.jangoInfo[self.jongmok_code]['체결가/체결시간'][-1]
-                    if (int(last_chegyeol_info.split(':')[1]) != current_price):
-                        chegyeol_info_list = self.jangoInfo[self.jongmok_code]['체결가/체결시간']
-                        chegyeol_info_list.append(chegyeol_info)
-                        current_jango['체결가/체결시간'] = chegyeol_info_list
-                    logger.debug('_receive_chejan_data_11')
-                    price_list = self.jangoInfo[self.jongmok_code]['최근매수가']
-                    last_price = price_list[-1]
-                    if (last_price != current_price):
-                        # 매수가 나눠져서 진행 중이므로 자료 매수횟수 업데이트 안함
-                        price_list.append(current_price)
-                    current_jango['최근매수가'] = price_list
-                    logger.debug('_receive_chejan_data_12')
-                    chumae_count = self.jangoInfo[self.jongmok_code]['매수횟수']
-                    if (last_price != current_price):
-                        current_jango['매수횟수'] = chumae_count + 1
-                    else:
-                        current_jango['매수횟수'] = chumae_count
-
-                    self.jangoInfo[self.jongmok_code].update(current_jango)
-
-            # self.makeEtcJangoInfo(self.jongmok_code)
-            self.makeJangoInfoFile()
+            # if (self.jongmok_code  in self.michegyeolInfo):
+            #     if (self.michegyeolInfo[self.jongmok_code ]['미체결수량']):
+            #         logger.debug('_receive_chejan_data_5')
+            #         logger.debug('..여기 타는지 확인함..')
+            #         return
+            #         # 미체결 수량이 없으므로 정보 삭제
+            # del (self.michegyeolInfo[self.jongmok_code])
+            # logger.debug('_receive_chejan_data_6')
+            # if (self.boyou_suryang == 0):
+            #     # self.jangoInfo.pop(self.jongmok_code) # KeyError로 주석처리 2019.05.08
+            #     # self.removeConditionOccurList(jongmok_code)
+            #     # else:
+            #     # 보유 수량이 늘었다는 것은 매수수행했다는 소리임
+            #     #   self.sigBuy.emit()
+            #
+            #     # 아래 잔고 정보의 경우 TR:계좌평가잔고내역요청 필드와 일치하게 만들어야 함
+            #     logger.debug('_receive_chejan_data_7')
+            #     current_jango = {}
+            #     current_jango['보유수량'] = self.boyou_suryang
+            #     current_jango['매매가능수량'] = self.jumun_ganeung_suryang  # TR 잔고에서 매매가능 수량 이란 이름으로 사용되므로
+            #     current_jango['매입가'] = self.maeip_danga
+            #     current_jango['종목번호'] = self.jongmok_code
+            #     current_jango['종목명'] = jongmok_name.strip()
+            #     chegyeol_info = util.cur_date_time('%Y%m%d%H%M%S') + ":" + str(current_price)
+            #     logger.debug('_receive_chejan_data_8')
+            #     logger.debug('#####################체결 정보 조회 start ########################')
+            #     logger.debug(chegyeol_info)
+            #     logger.debug('#####################체결 정보 조회 end ##########################')
+            #     if (self.jongmok_code  not in self.jangoInfo):
+            #         logger.debug('_receive_chejan_data_9')
+            #         current_jango['주문/체결시간'] = [util.cur_date_time('%Y%m%d%H%M%S')]
+            #         current_jango['체결가/체결시간'] = [chegyeol_info]
+            #         current_jango['최근매수가'] = [current_price]
+            #         current_jango['매수횟수'] = 1
+            #
+            #         self.jangoInfo[self.jongmok_code] = current_jango
+            #
+            #     else:
+            #         logger.debug('_receive_chejan_data_10')
+            #         chegyeol_time_list = self.jangoInfo[self.jongmok_code]['주문/체결시간']
+            #         chegyeol_time_list.append(util.cur_date_time('%Y%m%d%H%M%S'))
+            #         current_jango['주문/체결시간'] = chegyeol_time_list
+            #
+            #         last_chegyeol_info = self.jangoInfo[self.jongmok_code]['체결가/체결시간'][-1]
+            #         if (int(last_chegyeol_info.split(':')[1]) != current_price):
+            #             chegyeol_info_list = self.jangoInfo[self.jongmok_code]['체결가/체결시간']
+            #             chegyeol_info_list.append(chegyeol_info)
+            #             current_jango['체결가/체결시간'] = chegyeol_info_list
+            #         logger.debug('_receive_chejan_data_11')
+            #         price_list = self.jangoInfo[self.jongmok_code]['최근매수가']
+            #         last_price = price_list[-1]
+            #         if (last_price != current_price):
+            #             # 매수가 나눠져서 진행 중이므로 자료 매수횟수 업데이트 안함
+            #             price_list.append(current_price)
+            #         current_jango['최근매수가'] = price_list
+            #         logger.debug('_receive_chejan_data_12')
+            #         chumae_count = self.jangoInfo[self.jongmok_code]['매수횟수']
+            #         if (last_price != current_price):
+            #             current_jango['매수횟수'] = chumae_count + 1
+            #         else:
+            #             current_jango['매수횟수'] = chumae_count
+            #
+            #         self.jangoInfo[self.jongmok_code].update(current_jango)
+            #
+            # # self.makeEtcJangoInfo(self.jongmok_code)
+            # self.makeJangoInfoFile()
             # 미체결수량이 0이고 매수인 경우, 확정매도 처리
-
             if self.michegyeol_suryang == 0 and self.maedo_maesu_gubun == "2":
+                logger.debug('## 미체결수량이 0이고 매수인 경우 json정보 저장  start ##')
                 logger.debug('_receive_chejan_data_13')
                 sell_price = self.sysStatagy.get_maedo_price(self.maeip_danga, 1.03)
                 # sell_qty = self.boyou_suryang
@@ -442,8 +442,10 @@ class Kiwoom(QAxWidget):
                 logger.debug('_receive_chejan_data_14')
                 self.boyoustock.stock_buy([self.jongmok_code,jongmok_name.strip(), self.maeip_danga, self.boyou_suryang, sell_price, stop_price]) # json파일에 매수종목 추가
                 logger.debug('_receive_chejan_data_15')
+                logger.debug('## 미체결수량이 0이고 매수인 경우 json정보 저장  end  ##')
 
             if self.michegyeol_suryang == 0 and self.maedo_maesu_gubun == "1":
+                logger.debug('## 미체결수량이 0이고 매도인 경우 json정보 삭제  start ##')
                 logger.debug('_receive_chejan_data_16')
                 # 매도시, 보유주식정보 boyouStock.json에서 제외
                 sell_price = self.sysStatagy.get_maedo_price(self.maeip_danga, 1.03)
@@ -451,6 +453,7 @@ class Kiwoom(QAxWidget):
                 logger.debug('_receive_chejan_data_17')
                 self.boyoustock.stock_sell([self.jongmok_code, jongmok_name.strip(), self.maeip_danga, self.boyou_suryang, sell_price, stop_price])  # json파일에 매수종목 추가
                 logger.debug('_receive_chejan_data_18')
+                logger.debug('## 미체결수량이 0이고 매도인 경우 json정보 삭제   end ##')
 
             pass
         elif (gubun == "0"):
@@ -462,11 +465,11 @@ class Kiwoom(QAxWidget):
             self.maedo_maesu_gubun = self.get_chejan_data(jk_util.name_fid['매도매수구분'])
             logger.debug('_receive_chejan_data_20')
             if self.maedo_maesu_gubun == "1":
-                print('주문상태 : ', '매도', self.jumun_sangtae)
+                logger.debug(util.cur_date_time() + '주문상태 : 매도 : ' + str(self.jumun_sangtae))
             else:
-                print('주문상태 : ', '매수', self.jumun_sangtae)
-            print('종목코드 : ', self.jongmok_code)
-            print('미체결수량 : ', self.michegyeol_suryang)
+                logger.debug(util.cur_date_time() + '주문상태 : 매수 : ' + str(self.jumun_sangtae))
+            logger.debug(util.cur_date_time() +'종목코드 : '+self.jongmok_code)
+            logger.debug(util.cur_date_time() +'미체결수량 : '+self.michegyeol_suryang)
             logger.debug('_receive_chejan_data_21')
             # 주문 상태
             # 매수 시 접수(gubun-0) - 체결(gubun-0) - 잔고(gubun-1)
