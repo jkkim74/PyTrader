@@ -469,7 +469,7 @@ class Kiwoom(QAxWidget):
             else:
                 logger.debug(util.cur_date_time() + '주문상태 : 매수 : ' + str(self.jumun_sangtae))
             logger.debug(util.cur_date_time() +'종목코드 : '+self.jongmok_code)
-            logger.debug(util.cur_date_time() +'미체결수량 : '+self.michegyeol_suryang)
+            # logger.debug(util.cur_date_time() +'미체결수량 : '+self.michegyeol_suryang)
             logger.debug('_receive_chejan_data_21')
             # 주문 상태
             # 매수 시 접수(gubun-0) - 체결(gubun-0) - 잔고(gubun-1)
