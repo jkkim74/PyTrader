@@ -559,9 +559,11 @@ class MyWindow(QMainWindow, form_class):
 
     def trade_stocks(self):
         if self.stratagy.isTimeAvalable(self.kiwoom.maesu_start_time, self.kiwoom.maesu_end_time):
+            logger.debug("trade_stocks_1")
             hoga_lookup = {'지정가': "00", '시장가': "03"}
             f = open(self.kiwoom.buy_loc, 'rt', encoding='UTF-8')
             buy_list = f.readlines()
+            logger.debug("trade_stocks_2")
             f.close()
             code = ''
             for stock in buy_list:
@@ -571,16 +573,16 @@ class MyWindow(QMainWindow, form_class):
                 fidList = str(jk_util.name_fid["현재가"]) + ";" + str(jk_util.name_fid["종목명"]) + ";" + str(
                     jk_util.name_fid["종목코드"])
                 self.kiwoom.setRealReg("0101", code[:-1], fidList, "0")
-
+            logger.debug("trade_stocks_3")
             f = open(self.kiwoom.sell_loc, 'rt', encoding='UTF-8')
             sell_list = f.readlines()
             f.close()
 
             account = self.comboBox.currentText()
-
+            logger.debug("trade_stocks_4")
             if len(buy_list) == 0:
                 print("매수 대상 종목이 존재하지 않습니다.")
-
+            logger.debug("trade_stocks_5")
             # buy list
             for row_data in buy_list:
                 split_row_data = row_data.split(';')
@@ -589,7 +591,9 @@ class MyWindow(QMainWindow, form_class):
                 num = split_row_data[3]
                 price = split_row_data[4]
                 if split_row_data[-1].rstrip() == '매수전':
+                    logger.debug("trade_stocks_6")
                     if self.trade_buy_stratagic(code):  # * 매수전략 적용 *
+                        logger.debug("trade_stocks_7")
                         # 다시 해당 주식의 TR정보를 가져옮.. 상한가 오류로 인하여..
                         self.get_current_info_tr(code)
                         if self.get_boyou_cnt() >= total_boyou_cnt:
@@ -600,16 +604,19 @@ class MyWindow(QMainWindow, form_class):
                             num = buy_num_info[0]
                             price = buy_num_info[1]
                             print("매수수량 : ", num, " 매수상한가 : ", price)
+                            logger.debug("trade_stocks_8")
                             self.kiwoom.send_order("send_order_req", "0101", account, 1, code, num, price,
                                                    hoga_lookup[hoga], "")  # 1: 매수, 2: 매도
+                            logger.debug("trade_stocks_9")
                             if self.kiwoom.order_result == 0:
                                 self._file_update(self.kiwoom.buy_loc, code, '매수전', '주문완료')
                             else:
                                 print(self.kiwoom.order_result, ': 매수 처리 못했습니다.')
                 # time.sleep(5)
-
+            logger.debug("trade_stocks_10")
             if len(sell_list) == 0:
                 print("매도 대상 종목이 존재하지 않습니다.")
+            logger.debug("trade_stocks_11")
             # sell list
             for row_data in sell_list:
                 split_row_data = row_data.split(';')
@@ -617,8 +624,9 @@ class MyWindow(QMainWindow, form_class):
                 code = split_row_data[1]
                 num = split_row_data[3]
                 price = split_row_data[4]
-
+                logger.debug("trade_stocks_12")
                 if split_row_data[-2].rstrip() == '매도전':
+                    logger.debug("trade_stocks_13")
                     self.kiwoom.send_order("send_order_req", "0101", account, 2, code, num, price, hoga_lookup[hoga],
                                            "")  # 1: 매수, 2: 매도
                     print('결과 : ', self.kiwoom.order_result)

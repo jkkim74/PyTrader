@@ -205,7 +205,7 @@ class Kiwoom(QAxWidget):
         :return:
         """
         print(util.cur_date_time() + " : 주문/잔고: %s %s %s %s" % (sScrNo, sRQName, sTrCode, sMsg))
-        logger.debug(util.cur_date_time() + " : 주문/잔고: %s %s %s %s" % (sScrNo, sRQName, sTrCode, sMsg))
+        # logger.debug(util.cur_date_time() + " : 주문/잔고: %s %s %s %s" % (sScrNo, sRQName, sTrCode, sMsg))
     def _receive_tr_data(self, screen_no, rqname, trcode, record_name, next, unused1, unused2, unused3, unused4):
         if next == '2':
             self.remained_data = True
@@ -436,7 +436,7 @@ class Kiwoom(QAxWidget):
                 sell_price = self.sysStatagy.get_maedo_price(self.maeip_danga, 1.03)
                 # sell_qty = self.boyou_suryang
                 # self.add_stock_sell_info(self.jongmok_code, sell_price, sell_qty, "")
-                self.check_balance() ## 현재 보유잔고 정보 저장
+                # self.check_balance() ## 현재 보유잔고 정보 저장   2019.06.10 매도시 오류로 주석 처리
                 # 매수시, 보유주식정보 boyouStock.json에 추가
                 stop_price = self.sysStatagy.get_maedo_price(self.maeip_danga, 0.95) # 손절가
                 logger.debug('_receive_chejan_data_14')
