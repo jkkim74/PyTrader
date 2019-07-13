@@ -40,14 +40,21 @@ class BoyouStock:
         self.updateBoyouStockInfo(stock_list)
 
     def stock_sell(self,maedo_stock):
+        logger.debug('########################## stock_sell maedo_stock Info start ####################### ')
+        logger.debug(maedo_stock)
+        logger.debug('########################## stock_sell maedo_stock Info end   ####################### ')
         with open(boyou_stock_file,'rt',encoding='utf-8') as stock_json:
             stock_data = json.load(stock_json)
         if len(stock_data) > 0:
             stock_list = stock_data['s_datail']
             if len(stock_list) > 0:
                 for key in range(len(stock_list)):
-                    if stock_list[key][0] == maedo_stock[0]:
-                        del stock_list[key]
+                    try:
+                        if stock_list[key][0] == maedo_stock[0]:
+                            del stock_list[key]
+                    except IndexError as e:
+                        print(e)
+                        pass
             self.updateBoyouStockInfo(stock_list)
         else:
             print('보유 종목이 없습니다.')
