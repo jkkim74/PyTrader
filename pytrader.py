@@ -28,6 +28,8 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(fh_log)
 
+config_stock_file = 'stor/config.json'
+
 
 class MyWindow(QMainWindow, form_class):
     def __init__(self):
@@ -61,6 +63,10 @@ class MyWindow(QMainWindow, form_class):
         self.timer_naver = QTimer(self)
         self.timer_naver.start(1000 * 4)
 
+        # Naver에서 현재가 가져오기
+        self.timer_rate = QTimer(self)
+        self.timer_rate.start(1000 * 3)
+
         # 계좌정보 넣어줌
         accouns_num = int(self.kiwoom.get_login_info("ACCOUNT_CNT"))
         accounts = self.kiwoom.get_login_info("ACCNO")
@@ -90,10 +96,24 @@ class MyWindow(QMainWindow, form_class):
         self.timer3.timeout.connect(self.timeout3)
         self.timer4.timeout.connect(self.timeout4)  # stop loss 처리 # 보유주식정보 가져오는 것으로 수정함.2019.05.19
         self.timer_naver.timeout.connect(self.timeout_naver)
+        self.timer_rate.timeout.connect(self.timeout_rate)
         self.lineEdit.textChanged.connect(self.code_changed)
         self.pushButton.clicked.connect(self.send_order)
         self.pushButton_2.clicked.connect(
             self.check_balance_Widget)  # pushButton_2 라는 객체가 클릭될 때 check_balance라는 메서드가 호출
+        
+        # 손절,익절률 설정 값 읽어오기
+        config = self.boyoustock.readConfig()
+        if len(config) > 0:
+            self.stop_profit_rate = (config["stop_profit_rate"]/100) + 1
+            self.stop_loss_rate = 1 - (config["stop_loss_rate"]/100)
+            self.spinBox_6.setValue(config["stop_profit_rate"])
+            self.spinBox_7.setValue(config["stop_loss_rate"])
+        else:
+            self.stop_profit_rate = (self.spinBox_6.value()/100) + 1
+            self.stop_loss_rate = 1 - (self.spinBox_7.value()/100)
+        print("초기 설정 익절률: " + str(self.stop_profit_rate))
+        print("초기 설정 손절률: " + str(self.stop_loss_rate))
 
     def init_boyou_mado(self):
         market_start_time = QTime(9, 0, 0)
@@ -148,6 +168,25 @@ class MyWindow(QMainWindow, form_class):
     def timeout_naver(self):
         self.cur_stock_price_naver()
 
+    def timeout_rate(self):
+        config = {}
+        profit = (self.spinBox_6.value()/100) + 1
+        loss = 1 - (self.spinBox_7.value()/100)
+        if self.stop_profit_rate != profit:
+            self.stop_profit_rate = profit
+            self.spinBox_6.setValue(self.spinBox_6.value())
+            config["stop_profit_rate"] = self.spinBox_6.value()
+            config["stop_loss_rate"] = self.spinBox_7.value()
+            self.boyoustock.updateConfig(config)
+            print("익절률이 변경되었습니다. TO "+str(profit))
+        if self.stop_loss_rate != loss:
+            self.stop_loss_rate = loss
+            self.spinBox_7.setValue(self.spinBox_7.value())
+            config["stop_profit_rate"] = self.spinBox_6.value()
+            config["stop_loss_rate"] = self.spinBox_7.value()
+            self.boyoustock.updateConfig(config)
+            print("손절률이 변경되었습니다. TO "+str(loss))
+
     def boyou_stock_save_json(self):
         if len(self.init_boyou_stock_list) > 0:
             init_stock_list=[]
@@ -159,8 +198,8 @@ class MyWindow(QMainWindow, form_class):
                 # cur_price = int(row[3].replace(',', ''))
                 stock_code = row[6]
                 stock_name = row[0]
-                mado_price = self.stratagy.get_maedo_price(maeip_price, 0.95)  # 5% 손절가처리
-                sell_price = self.stratagy.get_maedo_price(maeip_price, 1.03)  # 목표가 처리
+                mado_price = self.stratagy.get_maedo_price(maeip_price, self.stop_loss_rate)  # 5% 손절가처리
+                sell_price = self.stratagy.get_maedo_price(maeip_price, self.stop_profit_rate)  # 목표가 처리
                 self.boyoustock.stock_buy([stock_code, stock_name, maeip_price, boyou_cnt, sell_price, mado_price])
         else:
             init_stock_list = []
@@ -181,8 +220,8 @@ class MyWindow(QMainWindow, form_class):
             stock_nm = bstock[1] # 주식명
             maeip_price = bstock[2] # 매입단가
             maeip_qtr = bstock[3] # 매입수
-            stop_price = self.stratagy.get_maedo_price(maeip_price, 0.95)  # -5% 손절가
-            dest_price = self.stratagy.get_maedo_price(maeip_price, 1.03)  # 목표가 도달시
+            stop_price = self.stratagy.get_maedo_price(maeip_price, self.stop_loss_rate)  # -5% 손절가
+            dest_price = self.stratagy.get_maedo_price(maeip_price, self.stop_profit_rate)  # 목표가 도달시
             cur_price = util.get_naver_cur_stock_price(stock_cd) # 네이버에서 가져온 현재가
             logger.debug(util.cur_date_time() +'보유주식명:'+stock_nm+',주식코드:'+stock_cd + ',현재가:' + str(cur_price)+',예상 손절가:'+str(stop_price))
             if cur_price <= stop_price:
@@ -416,7 +455,7 @@ class MyWindow(QMainWindow, form_class):
             boyou_cnt = int(row[1].replace(',', ''))
             maeip_price = int(row[2].replace(',', ''))
             stock_code = row[6]
-            mado_price = stratagy.get_maedo_price(maeip_price, 1.03)
+            mado_price = stratagy.get_maedo_price(maeip_price, self.stop_profit_rate)
             self.add_init_stock_sell_info(stock_code, mado_price, boyou_cnt, 'I')
 
     # 매도 Stor에 매도 종목 추가

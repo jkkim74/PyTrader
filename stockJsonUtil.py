@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 from logger import *
 boyou_stock_file = 'stor/boyouStock.json'
+config_stock_file = 'stor/config.json'
 boyou_stock_list = []# [['123456','naver','40000','10','41200','38000'],['890678','daum','40000','10','41200','38000'],['123654','samsung','40000','10','41200','38000']]
 
 class BoyouStock:
@@ -58,6 +59,23 @@ class BoyouStock:
             self.updateBoyouStockInfo(stock_list)
         else:
             print('보유 종목이 없습니다.')
+
+    def readConfig(self):
+        with open(config_stock_file,'rt',encoding='utf-8') as config_json:
+            config_data = json.load(config_json)
+        logger.debug('########################## configStock Info start ####################### ')
+        logger.debug(str(config_data))
+        logger.debug('########################## configStock Info end   ####################### ')
+        return config_data
+
+    def updateConfig(self,config_stock):
+        if len(config_stock) > 0:
+            with open(config_stock_file, 'w', encoding='utf-8') as config_data:
+                json.dump(config_stock, config_data, ensure_ascii=False, indent="\t")
+        else:
+            print('변경 설정정보가 없습니다.')
+            with open(config_stock_file, 'w', encoding='utf-8') as config_data:
+                json.dump(config_stock, config_data, ensure_ascii=False, indent="\t")
 
 
 
