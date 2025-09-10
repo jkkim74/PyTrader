@@ -42,11 +42,26 @@ class KoreanStockScreener:
         try:
             # KOSPI 종목 리스트
             self.kospi_stocks = fdr.StockListing('KOSPI')
-            print(f"KOSPI 종목 수: {len(self.kospi_stocks)}")
-
-            # KOSDAQ 종목 리스트  
+            # KOSDAQ 종목 리스트
             self.kosdaq_stocks = fdr.StockListing('KOSDAQ')
+
+            # 🚫 거래정지 / 상장폐지 종목 제거
+            if 'State' in self.kospi_stocks.columns:
+                self.kospi_stocks = self.kospi_stocks[self.kospi_stocks['State'].isna()]
+            if 'State' in self.kosdaq_stocks.columns:
+                self.kosdaq_stocks = self.kosdaq_stocks[self.kosdaq_stocks['State'].isna()]
+
+            print(f"거래 가능한 KOSPI 종목 수: {len(self.kospi_stocks)}")
+            print(f"거래 가능한 KOSDAQ 종목 수: {len(self.kosdaq_stocks)}")
+
+            print(f"KOSPI 종목 수: {len(self.kospi_stocks)}")
+            with open("stock_columns.txt", "w", encoding="utf-8") as f:
+                f.write(f"KOSPI 컬럼: {self.kospi_stocks.columns.tolist()}\n")
+
+
             print(f"KOSDAQ 종목 수: {len(self.kosdaq_stocks)}")
+            with open("stock_columns.txt", "a", encoding="utf-8") as f:
+                f.write(f"KOSDAQ 컬럼: {self.kosdaq_stocks.columns.tolist()}\n")
 
             return True
         except Exception as e:
@@ -111,7 +126,7 @@ class KoreanStockScreener:
                 return None
 
             three_month_high = recent_data['High'].max()
-
+            print("three_month_high",three_month_high)
             # 2. 20주 이동평균 계산 (주봉 기준)
             # 일봉 데이터를 주봉으로 변환
             weekly_data = data.resample('W').agg({
@@ -172,7 +187,7 @@ class KoreanStockScreener:
         all_stocks = pd.concat([self.kospi_stocks, self.kosdaq_stocks], ignore_index=True)
 
         # 시가총액 기준으로 정렬하여 상위 종목부터 검사 (시가총액이 큰 종목이 더 안정적)
-        all_stocks = all_stocks.sort_values('Marcap', ascending=False, na_last=True)
+        all_stocks = all_stocks.sort_values('Marcap', ascending=False, na_position='last')
 
         print(f"총 {len(all_stocks)} 종목 중 상위 {max_stocks}개 종목을 검사합니다...")
 
@@ -189,6 +204,10 @@ class KoreanStockScreener:
             data = self.get_stock_data(symbol)
 
             if data is None:
+                continue
+
+            # 🚫 거래정지 (최근 거래량이 0)
+            if data['Volume'].iloc[-1] == 0:
                 continue
 
             # 기술적 분석 수행
@@ -340,7 +359,7 @@ def main():
 
     try:
         # 주식 스크리닝 실행 (상위 50개 종목 검사)
-        results = screener.screen_stocks(max_stocks=50)
+        results = screener.screen_stocks(max_stocks=2000)
 
         if not results.empty:
             print(f"\n🎯 총 {len(results)}개 종목이 조건을 만족합니다!")
@@ -432,5 +451,5 @@ if __name__ == "__main__":
     main()
 
     # 또는 개별 함수 실행
-    # example_single_stock_analysis('005930')  # 삼성전자 분석
+    # example_single_stock_analysis('001820')  # 삼성전자 분석 005930
     # example_custom_screening(100)  # 커스텀 스크리닝
