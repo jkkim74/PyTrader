@@ -1,21 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-Weekly W Breakout Screener (Final)
-- 20주선 위에서 W형 전고 돌파/대기/되돌림 종목 탐색
-- 데이터: KRX는 FinanceDataReader/pykrx 우선, 해외/폴백은 yfinance
-- 진행바(tqdm), 중간 저장(CSV/HTML), 이름 매핑, 레이트리밋/재시도/타임아웃 포함
+Weekly W Breakout Screener (with Entry/Stop/Targets)
+- 20주선 위 W형 전고 돌파/대기/되돌림 스캐너
+- KRX: FinanceDataReader/pykrx 우선, 해외/폴백: yfinance
+- 진행바(tqdm), CSV/HTML 저장, 이름 매핑, 레이트리밋/재시도/타임아웃
+- 적정 매수가(entry), 손절가(stop), 목표가(target1/2), 손익비(rr1) 계산 포함
 
 Author: gpt-5
 """
 
 from __future__ import annotations
 
-import os
-import socket
-import time
-import random
-import threading
-import logging
+import socket, time, random, threading, logging
 from dataclasses import dataclass
 from typing import List, Optional, Dict, Tuple
 
@@ -35,12 +31,10 @@ except Exception:
 
 import yfinance as yf
 
-# tqdm (progress)
+# tqdm (progress bar)
 try:
     from tqdm.auto import tqdm
-    HAS_TQDM = True
 except Exception:
-    HAS_TQDM = False
     class tqdm:  # fallback dummy
         def __init__(self, total=None, desc="", unit=""): self.n=0
         def update(self, n=1): self.n += n
@@ -48,13 +42,11 @@ except Exception:
         def close(self): pass
 
 # ----------------------
-# Global network safety
+# Networking safety
 # ----------------------
-# Avoid infinite wait
-socket.setdefaulttimeout(10)
+socket.setdefaulttimeout(10)  # avoid infinite waits
 
-# Rate limit for remote calls (KRX 서버 보호)
-RATE_LIMIT_PER_SEC = 2.0
+RATE_LIMIT_PER_SEC = 2.0  # KRX는 1.5~3 권장
 _rate_lock = threading.Lock()
 _last_call = 0.0
 def rate_limit():
@@ -109,8 +101,8 @@ def _standardize_ohlcv(df: pd.DataFrame, colmap: dict) -> pd.DataFrame:
 
 def fetch_daily_any(ticker: str, start="2015-01-01", end=None, quiet=True) -> pd.DataFrame:
     """
-    - KRX: '005930.KS' / '035420.KQ' / '005930' 모두 지원
-    - 해외: 'AAPL', 'NVDA' 등은 yfinance
+    - KRX: '005930.KS' / '035420.KQ' / '005930'
+    - Global: 'AAPL', 'NVDA' (yfinance)
     """
     is_krx = ticker.endswith(".KS") or ticker.endswith(".KQ") or ticker.isdigit()
     code = ticker.split(".")[0] if is_krx else ticker
@@ -166,13 +158,12 @@ def fetch_daily_any(ticker: str, start="2015-01-01", end=None, quiet=True) -> pd
     return pd.DataFrame()
 
 def clean_ohlcv(df: pd.DataFrame) -> pd.DataFrame:
-    """0 또는 음수 가격행 제거, 인덱스 중복 제거"""
-    if df.empty:
-        return df
+    """0/음수 가격행 제거, 인덱스 중복 제거"""
+    if df.empty: return df
     df = df.copy()
     df = df[~df.index.duplicated(keep="last")]
-    pos_mask = (df[["open","high","low","close"]] > 0).all(axis=1)
-    df = df[pos_mask]
+    pos = (df[["open","high","low","close"]] > 0).all(axis=1)
+    df = df[pos]
     df = df[df["high"] >= df["low"]]
     return df
 
@@ -186,15 +177,14 @@ def to_weekly(df_daily: pd.DataFrame, include_partial_week=True,
     w = pd.concat([o,h,l,c,v], axis=1)
     w.columns = ["open","high","low","close","volume"]
     w = w.dropna()
-    # 주봉에서도 0 제거
     w = w[(w[["open","high","low","close"]] > 0).all(axis=1)]
     if not include_partial_week and len(w) > 0:
         now = pd.Timestamp.now(tz=tz)
         if now.weekday() <= 4:
-            fri_date = now.normalize() + pd.Timedelta(days=(4 - now.weekday()))
+            fri = now.normalize() + pd.Timedelta(days=(4 - now.weekday()))
         else:
-            fri_date = now.normalize() - pd.Timedelta(days=(now.weekday() - 4))
-        cutoff = fri_date + pd.Timedelta(hours=market_close_hour, minutes=market_close_min)
+            fri = now.normalize() - pd.Timedelta(days=(now.weekday() - 4))
+        cutoff = fri + pd.Timedelta(hours=market_close_hour, minutes=market_close_min)
         if now < cutoff:
             w = w.iloc[:-1]
     return w
@@ -204,17 +194,14 @@ def get_krx_universe(markets=("KOSPI","KOSDAQ"), limit=None) -> List[str]:
         raise RuntimeError("FinanceDataReader 필요: pip install FinanceDataReader")
     krx_df = fdr.StockListing("KRX")
     krx_df = krx_df[krx_df["Market"].isin(markets)].copy()
-    # 상장폐지 제외
     if "DelistingDate" in krx_df.columns:
         krx_df = krx_df[krx_df["DelistingDate"].isna()]
-    # 보통주만
     if "Type" in krx_df.columns:
         krx_df = krx_df[krx_df["Type"].isin(["Stock","Common Stock","보통주"])]
 
     def suff(row):
         return ".KS" if row["Market"] == "KOSPI" else ".KQ"
     tickers = (krx_df["Code"] + krx_df.apply(suff, axis=1)).tolist()
-    tickers = [t for t in tickers if isinstance(t, str)]
     if limit:
         tickers = tickers[:limit]
     return tickers
@@ -222,12 +209,12 @@ def get_krx_universe(markets=("KOSPI","KOSDAQ"), limit=None) -> List[str]:
 def get_name_map_krx(markets=("KOSPI","KOSDAQ")) -> Dict[str, str]:
     if fdr is None:
         return {}
-    krx_df = fdr.StockListing("KRX")[["Code","Name","Market"]]
-    krx_df = krx_df[krx_df["Market"].isin(markets)]
-    if "DelistingDate" in krx_df.columns:
-        krx_df = krx_df[krx_df["DelistingDate"].isna()]
+    df = fdr.StockListing("KRX")[["Code","Name","Market"]]
+    df = df[df["Market"].isin(markets)]
+    if "DelistingDate" in df.columns:
+        df = df[df["DelistingDate"].isna()]
     mp = {}
-    for _, r in krx_df.iterrows():
+    for _, r in df.iterrows():
         suffix = ".KS" if r["Market"] == "KOSPI" else ".KQ"
         mp[r["Code"] + suffix] = r["Name"]
         mp[r["Code"]] = r["Name"]
@@ -280,35 +267,27 @@ class Pivot:
     idx: int
     date: pd.Timestamp
     price: float
-    kind: str  # "H" or "L"
+    kind: str  # "H" | "L"
 
 def swing_points(df: pd.DataFrame, left: int = 3, right: int = 3) -> List[Pivot]:
     pivots: List[Pivot] = []
     for i in range(left, len(df) - right):
         w = df.iloc[i-left:i+right+1]
-        # local low
         if df["low"].iloc[i] == w["low"].min():
             pivots.append(Pivot(i, df.index[i], float(df["low"].iloc[i]), "L"))
-        # local high
         if df["high"].iloc[i] == w["high"].max():
             pivots.append(Pivot(i, df.index[i], float(df["high"].iloc[i]), "H"))
-
-    # sort and compress to alternate H/L
     pivots.sort(key=lambda p: p.idx)
     cleaned: List[Pivot] = []
     for p in pivots:
         if not cleaned:
-            cleaned.append(p)
-            continue
+            cleaned.append(p); continue
         last = cleaned[-1]
         if p.idx == last.idx:
-            # same bar both H/L -> keep both by ordering L then H
             if p.kind == last.kind:
-                # keep more extreme of the same kind
                 if (p.kind == "H" and p.price >= last.price) or (p.kind == "L" and p.price <= last.price):
                     cleaned[-1] = p
             else:
-                # ensure L then H order
                 if last.kind == "L" and p.kind == "H":
                     cleaned.append(p)
                 elif last.kind == "H" and p.kind == "L":
@@ -316,7 +295,6 @@ def swing_points(df: pd.DataFrame, left: int = 3, right: int = 3) -> List[Pivot]
                     cleaned.append(last)
             continue
         if p.kind == last.kind:
-            # replace with more extreme
             if (p.kind == "H" and p.price >= last.price) or (p.kind == "L" and p.price <= last.price):
                 cleaned[-1] = p
         else:
@@ -335,10 +313,8 @@ def filter_pivots_min_move(pivots: List[Pivot], min_move_pct: float = 0.10) -> L
                 res[-1] = p
             continue
         change = abs(p.price - last.price) / max(last.price, 1e-9)
-        if np.isnan(change) or np.isinf(change):
-            continue
-        if change < min_move_pct:
-            continue
+        if np.isnan(change) or np.isinf(change): continue
+        if change < min_move_pct: continue
         res.append(p)
     return res
 
@@ -363,30 +339,25 @@ def find_recent_W(pivots: List[Pivot],
                   l2_v_l1_min: float = 0.97,
                   min_span: int = 6,
                   max_span: int = 30) -> Optional[WPattern]:
-    if len(pivots) < 3:
-        return None
-    last_idx_cut = max(0, len(w) - lookback_weeks)
-    pivots = [p for p in pivots if p.idx >= last_idx_cut]
+    if len(pivots) < 3: return None
+    last_cut = max(0, len(w) - lookback_weeks)
+    pivots = [p for p in pivots if p.idx >= last_cut]
     n = len(pivots)
-    if n < 3:
-        return None
+    if n < 3: return None
 
     for i in range(n - 3, -1, -1):
         a, b, c = pivots[i], pivots[i+1], pivots[i+2]
         if a.kind == "L" and b.kind == "H" and c.kind == "L":
             H = b.price
-            if H <= 0:
-                continue
+            if H <= 0: continue
             mL = min(a.price, c.price)
             depth = (H - mL) / H
             span = c.idx - a.idx
-            if span < min_span or span > max_span:
-                continue
-            if not (min_depth <= depth <= max_depth):
-                continue
-            if c.price < a.price * l2_v_l1_min:
-                continue
-            return WPattern(L1=a, H=b, L2=c, neckline=H, depth_pct=depth, length_weeks=span, valid=True)
+            if not (min_span <= span <= max_span): continue
+            if not (min_depth <= depth <= max_depth): continue
+            if c.price < a.price * l2_v_l1_min: continue
+            return WPattern(L1=a, H=b, L2=c, neckline=H, depth_pct=depth,
+                            length_weeks=span, valid=True)
     return None
 
 # ----------------------
@@ -399,11 +370,11 @@ class Signal:
     date: pd.Timestamp
     close: float
     neckline: float
-    dist_to_H_pct: float  # signed: (close - H)/H*100
+    dist_to_H_pct: float  # signed (%)
     vol_ratio: float
     sma20: float
     sma20_slope3: float
-    atr14: float
+    atr14: float          # weekly ATR14 (for info)
     extra: Dict
 
 def check_triggers(ticker: str, w: pd.DataFrame, wp: WPattern,
@@ -425,21 +396,18 @@ def check_triggers(ticker: str, w: pd.DataFrame, wp: WPattern,
     if np.isnan([atr_, avgvol10, sma20, slope]).any():
         return None
 
-    # Trend filter
     if not (close > sma20 and slope > 0):
         return None
 
     dist_signed_pct = (close - H) / H * 100.0
     vol_ratio = vol / avgvol10 if avgvol10 > 0 else np.nan
 
-    # Pre-breakout: below H within near_pct and vol contraction
     if close < H and (H - close) / H <= near_pct and has_vol_contraction(w):
         return Signal(ticker, "pre_breakout", w.index[-1], close, H,
                       dist_to_H_pct=float(dist_signed_pct),
                       vol_ratio=float(vol_ratio), sma20=sma20, sma20_slope3=slope,
                       atr14=atr_, extra={"note": "vol_contraction"})
 
-    # Breakout: close >= H + buffer and volume surge
     breakout_buffer = max(breakout_atr_mult * atr_, breakout_min_pct * H)
     if close >= H + breakout_buffer and vol_ratio >= vol_mult:
         return Signal(ticker, "breakout", w.index[-1], close, H,
@@ -447,20 +415,18 @@ def check_triggers(ticker: str, w: pd.DataFrame, wp: WPattern,
                       vol_ratio=float(vol_ratio), sma20=sma20, sma20_slope3=slope,
                       atr14=atr_, extra={"buffer": breakout_buffer})
 
-    # Pullback: retest near H within ATR, bullish close, above 20W
     is_bullish = close > open_ and close >= (low + (high - low) * 0.5)
     if (low <= H + atr_) and (close > sma20) and is_bullish:
         return Signal(ticker, "pullback", w.index[-1], close, H,
                       dist_to_H_pct=float(dist_signed_pct),
                       vol_ratio=float(vol_ratio), sma20=sma20, sma20_slope3=slope,
                       atr14=atr_, extra={"note": "H+ATR retest"})
+
     return None
 
 def score_signal(sig: Signal) -> float:
-    # Simple score: base by status + 20W slope + volume contribution + closeness to H
     score = 0.0
     if sig.status == "pre_breakout":
-        # closer to H (from below) is better
         score += 2.5 - min(2.5, abs(sig.dist_to_H_pct) / 1.0)
     elif sig.status == "breakout":
         score += 3.0
@@ -471,7 +437,67 @@ def score_signal(sig: Signal) -> float:
     return float(max(0.0, score))
 
 # ----------------------
-# Core analyze per ticker
+# Trade plan (entry/stop/targets)
+# ----------------------
+def last_swing_low_daily(d: pd.DataFrame, lookback=30, left=2, right=2) -> Optional[float]:
+    piv = swing_points(d, left=left, right=right)
+    cut = max(0, len(d) - lookback)
+    cands = [p for p in piv if p.kind == "L" and p.idx >= cut]
+    if cands:
+        return float(cands[-1].price)
+    if len(d) >= 5:
+        return float(d["low"].iloc[-min(lookback, len(d)):].min())
+    return None
+
+def compute_trade_plan(d_daily: pd.DataFrame, w_weekly: pd.DataFrame, wp: WPattern, sig: Signal) -> Dict:
+    atr14d = true_range(d_daily).rolling(14).mean().iloc[-1]
+    H = float(wp.neckline)
+    depth = float(H - min(wp.L1.price, wp.L2.price))
+    target1 = H + depth * 1.0
+    target2 = H + depth * 1.5
+
+    pct1 = 0.01 * H  # 1%
+    entry = None
+    stop = None
+    entry_low = None
+    entry_high = None
+
+    if sig.status == "breakout":
+        buffer = max(0.25 * atr14d, pct1)
+        entry = H + buffer
+        stop = H - max(1.0 * atr14d, pct1)
+    elif sig.status == "pre_breakout":
+        buffer = max(0.25 * atr14d, pct1)
+        entry = H + buffer
+        swl = last_swing_low_daily(d_daily, lookback=30, left=2, right=2)
+        atr_stop = H - max(1.0 * atr14d, pct1)
+        stop = max(float(swl) if swl is not None else atr_stop, atr_stop)
+    else:  # pullback
+        entry = H
+        entry_low = H - 0.5 * atr14d
+        entry_high = H + 0.5 * atr14d
+        stop = H - max(1.0 * atr14d, pct1)
+
+    if entry is not None and stop is not None and stop >= entry:
+        stop = entry * 0.99  # guard
+
+    rr1 = None
+    if entry and stop and (entry - stop) > 1e-9:
+        rr1 = (target1 - entry) / (entry - stop)
+
+    return {
+        "atr14d": float(atr14d),
+        "entry": float(entry) if entry is not None else None,
+        "stop": float(stop) if stop is not None else None,
+        "target1": float(target1),
+        "target2": float(target2),
+        "entry_low": float(entry_low) if entry_low is not None else None,
+        "entry_high": float(entry_high) if entry_high is not None else None,
+        "rr1": float(rr1) if rr1 is not None else None
+    }
+
+# ----------------------
+# Analyze per ticker
 # ----------------------
 def analyze_ticker(ticker: str,
                    start="2015-01-01",
@@ -501,10 +527,15 @@ def analyze_ticker(ticker: str,
         return None, None
 
     sig = check_triggers(ticker, w, wp)
+    if not sig:
+        return None, None
+
+    plan = compute_trade_plan(d, w, wp, sig)
+    sig.extra.update(plan)
     return sig, wp
 
 # ----------------------
-# HTML rendering
+# HTML rendering (manual, 링크 활성/가독성 개선)
 # ----------------------
 from datetime import datetime
 
@@ -516,10 +547,33 @@ def quote_link(ticker: str) -> str:
 
 def render_html(df: pd.DataFrame, html_path: str, title="W Breakout Scanner", note=""):
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    base_css = """
+    .wrap { max-width: 1200px; margin: 10px auto; padding: 4px 8px; }
+    table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+    th { position: sticky; top: 0; z-index: 2; background: #222; color: #fff; padding: 8px; }
+    td { padding: 6px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    tbody tr:nth-child(even) { background: #fafafa; }
+    tbody tr:hover { background: #f1f5ff; }
+    a { color: #1565c0; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    td.col-name { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    td.col-ticker, td.col-status { text-align: center; white-space: nowrap; width: 110px; }
+    td.num { text-align: right; white-space: nowrap; }
+    .badge { display:inline-block; padding: 2px 8px; border-radius: 10px; color:#000; font-weight:600; }
+    .b-breakout { background:#06d6a0; }
+    .b-pre { background:#ffd166; }
+    .b-pullback { background:#118ab2; color:#fff; }
+    .sub { color:#666; font-size: 12px; }
+    """
+
     if df.empty:
-        html = f"""<html><head><meta charset="utf-8"><title>{title}</title></head>
-        <body><h2>{title}</h2><div style="color:#666">Updated: {now} {note}</div>
-        <p>No signals.</p></body></html>"""
+        html = f"""<html><head><meta charset="utf-8"><title>{title}</title>
+        <style>{base_css}</style></head>
+        <body><div class="wrap">
+          <h2>{title}</h2><div class="sub">Updated: {now} {note}</div>
+          <p>No signals.</p>
+        </div></body></html>"""
         with open(html_path, "w", encoding="utf-8") as f:
             f.write(html)
         return
@@ -527,48 +581,67 @@ def render_html(df: pd.DataFrame, html_path: str, title="W Breakout Scanner", no
     df2 = df.copy()
     df2["name"] = df2["name"].fillna("")
     df2["종목"] = df2.apply(
-        lambda r: f'<a href="{quote_link(r["ticker"])}" target="_blank">{(r["name"] or r["ticker"])}</a>',
+        lambda r: f'<a href="{quote_link(r["ticker"])}" title="{r["name"] or r["ticker"]}" target="_blank">{r["name"] or r["ticker"]}</a>',
         axis=1
     )
-    show_cols = ["종목","ticker","status","score","close","neckline","dist_to_H_pct",
-                 "vol_ratio","sma20","sma20_slope3","atr14","date"]
+    def badge(s):
+        if s == "breakout": return '<span class="badge b-breakout">breakout</span>'
+        if s == "pre_breakout": return '<span class="badge b-pre">pre</span>'
+        return '<span class="badge b-pullback">pullback</span>'
+    df2["status_badge"] = df2["status"].map(badge)
+
+    # 표시 컬럼
+    show_cols = [
+        "종목","ticker","status_badge",
+        "entry","stop","target1","target2","rr1",
+        "score","close","neckline","dist_to_H_pct",
+        "vol_ratio","sma20","sma20_slope3","atr14","date"
+    ]
     show_cols = [c for c in show_cols if c in df2.columns]
-    df2 = df2[show_cols]
+    df2 = df2[show_cols].rename(columns={"status_badge":"status"})
 
-    status_colors = {"breakout":"#06d6a0", "pre_breakout":"#ffd166", "pullback":"#118ab2"}
+    num_cols = {"entry","stop","target1","target2","rr1",
+                "score","close","neckline","dist_to_H_pct","vol_ratio","sma20","sma20_slope3","atr14"}
 
-    def style_status(s):
-        return [f"background-color: {status_colors.get(v,'#eee')}; text-align:center; font-weight:600" for v in s]
+    # 헤더
+    thead = "<tr>" + "".join(f"<th>{c}</th>" for c in df2.columns) + "</tr>"
 
-    styler = (
-        df2.style
-        .hide(axis="index")
-        .apply(style_status, subset=["status"])
-        .format({
-            "score": "{:.2f}",
-            "close": "{:,.2f}",
-            "neckline": "{:,.2f}",
-            "dist_to_H_pct": "{:+.2f}%",
-            "vol_ratio": "{:.2f}",
-            "sma20": "{:,.2f}",
-            "sma20_slope3": "{:+.2f}",
-            "atr14": "{:,.2f}",
-        }, na_rep="-", escape="html")
-        .set_table_styles([
-            {"selector":"th","props":[("background","#222"),("color","#fff"),("padding","6px 8px")]},
-            {"selector":"td","props":[("padding","6px 8px"),("border-bottom","1px solid #eee")]},
-            {"selector":"table","props":[("border-collapse","collapse"),
-                                         ("font-family","Segoe UI, Apple SD Gothic Neo, Arial"),
-                                         ("font-size","13.5px")]}
-        ])
-    )
+    # 바디
+    body_rows = []
+    for _, r in df2.iterrows():
+        tds = []
+        for c, v in r.items():
+            if c == "종목":
+                tds.append(f'<td class="col-name">{v}</td>')
+            elif c in {"ticker","status"}:
+                tds.append(f'<td class="col-ticker">{v}</td>')
+            elif c in num_cols:
+                fmt = "{:,.2f}"
+                if c in {"score","vol_ratio","rr1"}: fmt = "{:.2f}"
+                if c == "sma20_slope3": fmt = "{:+.2f}"
+                if c == "dist_to_H_pct": fmt = "{:+.2f}%"
+                try:
+                    v = fmt.format(float(v))
+                except Exception:
+                    pass
+                tds.append(f'<td class="num">{v}</td>')
+            else:
+                tds.append(f"<td>{v}</td>")
+        body_rows.append("<tr>" + "".join(tds) + "</tr>")
+    tbody = "\n".join(body_rows)
 
-    html = f"""<html><head><meta charset="utf-8"><title>{title}</title></head>
+    table_html = f"<table><thead>{thead}</thead><tbody>{tbody}</tbody></table>"
+
+    html = f"""<html><head><meta charset="utf-8"><title>{title}</title>
+    <style>{base_css}</style></head>
     <body>
-      <h2 style="margin:6px 0 2px 0">{title}</h2>
-      <div style="color:#666">Updated: {now} {note}</div>
-      {styler.to_html(escape=False)}
-    </body></html>""".replace("&lt;","<").replace("&gt;",">").replace("&#34;",'"')
+      <div class="wrap">
+        <h2 style="margin:6px 0 2px 0">{title}</h2>
+        <div class="sub">Updated: {now} {note}</div>
+        <div style="overflow-x:auto;">{table_html}</div>
+      </div>
+    </body></html>"""
+
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(html)
 
@@ -595,6 +668,7 @@ def scan_universe(tickers: List[str],
             sig, wp = analyze_ticker(t, include_partial_week=include_partial_week)
             if sig:
                 score = score_signal(sig)
+                ex = sig.extra or {}
                 row = {
                     "ticker": t,
                     "date": sig.date,
@@ -607,7 +681,13 @@ def scan_universe(tickers: List[str],
                     "sma20": round(sig.sma20, 3),
                     "sma20_slope3": round(sig.sma20_slope3, 3),
                     "atr14": round(sig.atr14, 3),
-                    "extra": sig.extra
+                    # trade plan
+                    "entry": round(ex.get("entry", float("nan")), 3),
+                    "stop": round(ex.get("stop", float("nan")), 3),
+                    "target1": round(ex.get("target1", float("nan")), 3),
+                    "target2": round(ex.get("target2", float("nan")), 3),
+                    "rr1": round(ex.get("rr1", float("nan")), 2),
+                    "extra": ex
                 }
                 return ("ok_signal", row)
             else:
@@ -628,7 +708,6 @@ def scan_universe(tickers: List[str],
             if checkpoint_html_path:
                 render_html(df, checkpoint_html_path, note="(checkpoint)")
         else:
-            # No signals yet -> still write HTML with notice
             if checkpoint_html_path:
                 render_html(pd.DataFrame(), checkpoint_html_path, note="(checkpoint)")
 
@@ -646,7 +725,6 @@ def scan_universe(tickers: List[str],
         if (checkpoint_path or checkpoint_html_path) and counters["done"] % checkpoint_interval == 0:
             _dump_checkpoint()
 
-    # run
     if workers and workers > 1:
         with ThreadPoolExecutor(max_workers=workers) as ex:
             fut_map = {ex.submit(_task, t): t for t in tickers}
@@ -677,10 +755,8 @@ def scan_universe(tickers: List[str],
                 f"signals={counters['signals']} errors={counters['errors']} "
                 f"time={elapsed:.1f}s avg={avg:.2f}s/stock")
 
-    # final save
-    if checkpoint_path:
-        if not df.empty:
-            df.to_csv(checkpoint_path, index=False, encoding="utf-8-sig")
+    if checkpoint_path and not df.empty:
+        df.to_csv(checkpoint_path, index=False, encoding="utf-8-sig")
     if checkpoint_html_path:
         render_html(df, checkpoint_html_path)
 
@@ -690,17 +766,15 @@ def scan_universe(tickers: List[str],
 # Main
 # ----------------------
 if __name__ == "__main__":
-    # 1) Universe & names
     try:
-        tickers = get_krx_universe(markets=("KOSPI","KOSDAQ"))  # 전종목
+        tickers = get_krx_universe(markets=("KOSPI","KOSDAQ"))
         name_map = get_name_map_krx()
     except Exception as e:
-        logger.warning(f"KRX universe failed ({e}), fallback to a small sample.")
+        logger.warning(f"KRX universe failed ({e}), fallback to sample tickers.")
         tickers = ["005930.KS", "000660.KS", "035420.KS", "068270.KS",
                    "AAPL", "MSFT", "NVDA", "TSLA"]
         name_map = {}
 
-    # 2) Scan
     result = scan_universe(
         tickers=tickers,
         workers=6,                         # KRX는 2~3 권장
@@ -712,9 +786,8 @@ if __name__ == "__main__":
         include_partial_week=True          # 오늘까지 진행 주봉 포함
     )
 
-    # 3) Print summary
     if result.empty:
         print("No signals.")
     else:
         print(result.head(20))
-        print(f"Total signals: {len(result)}  -> saved to scan_progress.csv / scan_progress.html")
+        print(f"Total signals: {len(result)} -> saved to scan_progress.csv / scan_progress.html")

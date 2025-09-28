@@ -125,7 +125,7 @@ class KoreanStockScreener:
             if len(recent_data) < 30:  # 충분한 데이터가 없는 경우
                 return None
 
-            # three_month_high = recent_data['High'].max()
+            three_month_high = recent_data['High'].max()
             # print("three_month_high",three_month_high)
             # 2. 20주 이동평균 계산 (주봉 기준)
             # 일봉 데이터를 주봉으로 변환
