@@ -122,6 +122,13 @@ class KoreanStockScreener:
             three_months_ago = self.current_date - timedelta(days=90)
             recent_data = data[data.index >= three_months_ago]
 
+            # 1. 52주 신고가
+            one_year_ago = self.current_date - timedelta(days=365)
+            last_year_data = data[data.index >= one_year_ago]
+            if len(last_year_data) < 50:
+                return None
+            high_52w = last_year_data['High'].max()
+
             if len(recent_data) < 30:  # 충분한 데이터가 없는 경우
                 return None
 
@@ -145,11 +152,14 @@ class KoreanStockScreener:
             # 3. 최근 3개월 평균 거래량 계산
             avg_volume_3m = recent_data['Volume'].mean()
             current_volume = data['Volume'].iloc[-1]
+            current_trading_value = data['Close'].iloc[-1] * data['Volume'].iloc[-1]
 
             # 4. 조건 검사
             condition_1 = current_price >= three_month_high  # 최고가 돌파
             condition_2 = current_price >= ma_20_weekly      # 20주봉 돌파
             condition_3 = current_volume >= (avg_volume_3m * 3)  # 거래량 3배 이상
+            condition_4 = current_trading_value >= 1000 * 1e8  # 1000억 (원 단위)
+
 
             return {
                 'current_price': current_price,
@@ -157,9 +167,12 @@ class KoreanStockScreener:
                 'ma_20_weekly': ma_20_weekly,
                 'avg_volume_3m': avg_volume_3m,
                 'current_volume': current_volume,
+                'current_trading_value':current_trading_value,
+                'high_52w': high_52w,
                 'condition_1': condition_1,
                 'condition_2': condition_2,
                 'condition_3': condition_3,
+                'condition_4': condition_4,
                 'all_conditions': condition_1 and condition_2 and condition_3
             }
 
@@ -229,7 +242,9 @@ class KoreanStockScreener:
                     '거래량비율': analysis['current_volume'] / analysis['avg_volume_3m'],
                     '최고가돌파': analysis['condition_1'],
                     '이평선돌파': analysis['condition_2'],
-                    '거래량급증': analysis['condition_3']
+                    '거래량급증': analysis['condition_3'],
+                    '거래대금': analysis['current_trading_value'],
+                    '52주신고가': analysis['high_52w']
                 })
                 print(f"✅ 조건 만족 종목 발견: {name} ({symbol})")
 

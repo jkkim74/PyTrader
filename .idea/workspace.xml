@@ -5,14 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b550dce5-0ea7-4b85-9a25-647cbad659eb" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/weekly_w_breakout_screener_gpt5_2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/korean_stock_screener_52_week_1000_up.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/korean_stock_screener2.py" beforeDir="false" afterPath="$PROJECT_DIR$/korean_stock_screener2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/korean_stock_screener2.py" beforeDir="false" afterPath="$PROJECT_DIR$/korean_stock_screener_20_month.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/korean_stock_screening_results.csv" beforeDir="false" afterPath="$PROJECT_DIR$/korean_stock_screening_results.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scan_progress.csv" beforeDir="false" afterPath="$PROJECT_DIR$/scan_progress.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scan_progress.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/weekly_w_breakout_screener_gpt5.py" beforeDir="false" afterPath="$PROJECT_DIR$/weekly_w_breakout_screener_gpt5.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -158,6 +154,8 @@
   "keyToString": {
     "Python.korean_stock_screener.executor": "Run",
     "Python.korean_stock_screener2.executor": "Run",
+    "Python.korean_stock_screener_20_month (1).executor": "Run",
+    "Python.korean_stock_screener_52_week_1000_up.executor": "Debug",
     "Python.weekly_w_breakout_screener_gpt5.executor": "Run",
     "Python.weekly_w_breakout_screener_gpt5_2.executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
@@ -173,30 +171,8 @@
       <recent name="D:\workspace2\PyTrader" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.korean_stock_screener2">
-    <configuration name="korean_stock_screener" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="PyTrader" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/korean_stock_screener.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="korean_stock_screener2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python.korean_stock_screener_20_month (1)">
+    <configuration name="korean_stock_screener_20_month (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="PyTrader" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -209,7 +185,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/korean_stock_screener2.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/korean_stock_screener_20_month.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -218,7 +194,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="weekly_w_breakout_screener" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="korean_stock_screener_20_month" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="PyTrader" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -228,10 +204,32 @@
       </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="false" />
+      <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/weekly_w_breakout_screener.py" />
+      <option name="SCRIPT_NAME" value="D:\workspace2\PyTrader\korean_stock_screener_20_month.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="korean_stock_screener_52_week_1000_up" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="PyTrader" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/korean_stock_screener_52_week_1000_up.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -308,19 +306,19 @@
     </configuration>
     <list>
       <item itemvalue="Python.weekly_w_breakout_strict" />
+      <item itemvalue="Python.korean_stock_screener_20_month (1)" />
+      <item itemvalue="Python.korean_stock_screener_52_week_1000_up" />
       <item itemvalue="Python.weekly_w_breakout_screener_gpt5_2" />
       <item itemvalue="Python.weekly_w_breakout_screener_gpt5" />
-      <item itemvalue="Python.korean_stock_screener2" />
-      <item itemvalue="Python.korean_stock_screener" />
-      <item itemvalue="Python.weekly_w_breakout_screener" />
+      <item itemvalue="Python.korean_stock_screener_20_month" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.korean_stock_screener2" />
+        <item itemvalue="Python.korean_stock_screener_20_month (1)" />
+        <item itemvalue="Python.korean_stock_screener_52_week_1000_up" />
+        <item itemvalue="Python.korean_stock_screener_20_month" />
         <item itemvalue="Python.weekly_w_breakout_screener_gpt5_2" />
         <item itemvalue="Python.weekly_w_breakout_screener_gpt5" />
-        <item itemvalue="Python.weekly_w_breakout_screener" />
-        <item itemvalue="Python.korean_stock_screener" />
       </list>
     </recent_temporary>
   </component>
@@ -367,6 +365,17 @@
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
     </layout>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/korean_stock_screener_52_week_1000_up.py</url>
+          <line>72</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/logs/debug.log">
