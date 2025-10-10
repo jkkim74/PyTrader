@@ -5,9 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b550dce5-0ea7-4b85-9a25-647cbad659eb" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/korean_stock_screener_52_week_1000_up.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/korean_stock_screener2.py" beforeDir="false" afterPath="$PROJECT_DIR$/korean_stock_screener_20_month.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/korean_stock_screening_results.csv" beforeDir="false" afterPath="$PROJECT_DIR$/korean_stock_screening_results.csv" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -150,22 +148,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.korean_stock_screener.executor": "Run",
-    "Python.korean_stock_screener2.executor": "Run",
-    "Python.korean_stock_screener_20_month (1).executor": "Run",
-    "Python.korean_stock_screener_52_week_1000_up.executor": "Debug",
-    "Python.weekly_w_breakout_screener_gpt5.executor": "Run",
-    "Python.weekly_w_breakout_screener_gpt5_2.executor": "Run",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "master",
-    "last_opened_file_path": "D:/workspace2/PyTrader",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PythonContentEntriesConfigurable"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.korean_stock_screener.executor&quot;: &quot;Run&quot;,
+    &quot;Python.korean_stock_screener2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.korean_stock_screener_20_month (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.korean_stock_screener_52_week_1000_up.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.weekly_w_breakout_screener_gpt5.executor&quot;: &quot;Run&quot;,
+    &quot;Python.weekly_w_breakout_screener_gpt5_2.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/workspace2/PyTrader&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PythonContentEntriesConfigurable&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\workspace2\PyTrader" />
@@ -174,7 +172,6 @@
   <component name="RunManager" selected="Python.korean_stock_screener_20_month (1)">
     <configuration name="korean_stock_screener_20_month (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="PyTrader" />
-      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
@@ -196,7 +193,6 @@
     </configuration>
     <configuration name="korean_stock_screener_20_month" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="PyTrader" />
-      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
@@ -218,7 +214,6 @@
     </configuration>
     <configuration name="korean_stock_screener_52_week_1000_up" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="PyTrader" />
-      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
@@ -240,7 +235,6 @@
     </configuration>
     <configuration name="weekly_w_breakout_screener_gpt5" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="PyTrader" />
-      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
@@ -262,7 +256,6 @@
     </configuration>
     <configuration name="weekly_w_breakout_screener_gpt5_2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="PyTrader" />
-      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
@@ -284,7 +277,6 @@
     </configuration>
     <configuration name="weekly_w_breakout_strict" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="PyTrader" />
-      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
