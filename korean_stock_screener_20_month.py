@@ -374,7 +374,7 @@ def main():
 
     try:
         # 주식 스크리닝 실행 (상위 50개 종목 검사)
-        results = screener.screen_stocks(max_stocks=2000)
+        results = screener.screen_stocks(max_stocks=2400)
 
         if not results.empty:
             print(f"\n🎯 총 {len(results)}개 종목이 조건을 만족합니다!")

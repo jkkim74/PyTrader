@@ -1,0 +1,562 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주식 스크리닝 결과 - 2025년 10월 31일</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 98%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header .info {
+            font-size: 1.1em;
+            opacity: 0.95;
+            margin-top: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .stat-card .label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .content {
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        th {
+            padding: 15px 8px;
+            text-align: center;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            white-space: nowrap;
+            font-size: 0.85em;
+            z-index: 10;
+        }
+
+        td {
+            padding: 12px 8px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            white-space: nowrap;
+        }
+
+        tbody tr:hover {
+            background: linear-gradient(to right, #f8f9fa, #e9ecef);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #fafbfc;
+        }
+
+        .rank {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .stock-name {
+            font-weight: 600;
+            color: #2c3e50;
+            text-align: left;
+            min-width: 120px;
+        }
+
+        .stock-code {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            font-family: 'Courier New', monospace;
+        }
+
+        .positive {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .negative {
+            color: #3498db;
+            font-weight: 600;
+        }
+
+        .neutral {
+            color: #95a5a6;
+        }
+
+        .price {
+            font-weight: 600;
+            color: #2c3e50;
+            font-family: 'Courier New', monospace;
+        }
+
+        .volume {
+            color: #34495e;
+            font-family: 'Courier New', monospace;
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 25px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        .footer p {
+            margin: 5px 0;
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            margin: 30px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        /* 컬럼 그룹 헤더 스타일 */
+        .group-header {
+            background: rgba(255, 255, 255, 0.2) !important;
+            font-size: 0.9em;
+            font-weight: 700;
+            border-left: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+            }
+            tbody tr:hover {
+                background: transparent !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            th, td {
+                padding: 8px 4px;
+                font-size: 0.75em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 주식 스크리닝 결과</h1>
+            <div class="info">
+                <p><strong>기준일:</strong> 2025년 10월 31일</p>
+                <p><strong>스크리닝 조건:</strong> 250일 신고가 돌파 + 거래대금 2배 증가 + 세력 순매수</p>
+                <p><strong>소요 시간:</strong> 327.6초 (5.5분)</p>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="label">📌 발견 종목 수</div>
+                <div class="value">10</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">📈 평균 상승률</div>
+                <div class="value">97.0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">💹 평균 거래대금 증가</div>
+                <div class="value">4.0배</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">💰 총 세력 순매수</div>
+                <div class="value">3722억</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <h2 class="section-title">🎯 전체 스크리닝 결과</h2>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th rowspan="2">순위</th>
+                            <th rowspan="2">종목명</th>
+                            <th rowspan="2">코드</th>
+                            <th colspan="5" class="group-header">가격 정보</th>
+                            <th colspan="4" class="group-header">거래대금 정보</th>
+                            <th colspan="4" class="group-header">수급 정보</th>
+                        </tr>
+                        <tr>
+                            <!-- 가격 정보 -->
+                            <th>현재가</th>
+                            <th>250일<br>신고가</th>
+                            <th>250일<br>최저가</th>
+                            <th>250일<br>상승률</th>
+                            <th>거래대금<br>증가</th>
+
+                            <!-- 거래대금 정보 -->
+                            <th>당일<br>거래대금</th>
+                            <th>20일<br>평균</th>
+                            <th>시가총액</th>
+                            <th>회전율</th>
+
+                            <!-- 수급 정보 -->
+                            <th>기관<br>순매수(억)</th>
+                            <th>외국인<br>순매수(억)</th>
+                            <th>기관<br>거래량</th>
+                            <th>외국인<br>거래량</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <tr>
+                            <td class="rank">1</td>
+                            <td class="stock-name">현대차</td>
+                            <td class="stock-code">005380</td>
+
+                            <!-- 가격 정보 -->
+                            <td class="price">290,000</td>
+                            <td class="price">289,500</td>
+                            <td class="price">175,800</td>
+                            <td class="positive">65.0%</td>
+                            <td class="positive">3.6배</td>
+
+                            <!-- 거래대금 정보 -->
+                            <td class="volume">10503.1억</td>
+                            <td class="volume">2891.6억</td>
+                            <td class="volume">593,798억</td>
+                            <td class="neutral">1.77%</td>
+
+                            <!-- 수급 정보 -->
+                            <td class="positive">1027.6</td>
+                            <td class="positive">521.0</td>
+                            <td class="volume">354,351</td>
+                            <td class="volume">179,640</td>
+                        </tr>
+
+                        <tr>
+                            <td class="rank">2</td>
+                            <td class="stock-name">대한전선</td>
+                            <td class="stock-code">001440</td>
+
+                            <!-- 가격 정보 -->
+                            <td class="price">24,200</td>
+                            <td class="price">21,950</td>
+                            <td class="price">10,000</td>
+                            <td class="positive">142.0%</td>
+                            <td class="positive">4.5배</td>
+
+                            <!-- 거래대금 정보 -->
+                            <td class="volume">4257.3억</td>
+                            <td class="volume">953.0억</td>
+                            <td class="volume">45,120억</td>
+                            <td class="neutral">9.44%</td>
+
+                            <!-- 수급 정보 -->
+                            <td class="positive">97.9</td>
+                            <td class="positive">520.7</td>
+                            <td class="volume">404,697</td>
+                            <td class="volume">2,151,468</td>
+                        </tr>
+
+                        <tr>
+                            <td class="rank">3</td>
+                            <td class="stock-name">하이브</td>
+                            <td class="stock-code">352820</td>
+
+                            <!-- 가격 정보 -->
+                            <td class="price">341,000</td>
+                            <td class="price">331,000</td>
+                            <td class="price">180,400</td>
+                            <td class="positive">89.0%</td>
+                            <td class="positive">2.0배</td>
+
+                            <!-- 거래대금 정보 -->
+                            <td class="volume">1879.4억</td>
+                            <td class="volume">916.9억</td>
+                            <td class="volume">143,554억</td>
+                            <td class="neutral">1.31%</td>
+
+                            <!-- 수급 정보 -->
+                            <td class="positive">388.9</td>
+                            <td class="positive">162.7</td>
+                            <td class="volume">114,035</td>
+                            <td class="volume">47,701</td>
+                        </tr>
+
+                        <tr>
+                            <td class="rank">4</td>
+                            <td class="stock-name">현대오토에버</td>
+                            <td class="stock-code">307950</td>
+
+                            <!-- 가격 정보 -->
+                            <td class="price">203,500</td>
+                            <td class="price">191,800</td>
+                            <td class="price">107,000</td>
+                            <td class="positive">90.2%</td>
+                            <td class="positive">11.9배</td>
+
+                            <!-- 거래대금 정보 -->
+                            <td class="volume">2884.2억</td>
+                            <td class="volume">241.4억</td>
+                            <td class="volume">55,808억</td>
+                            <td class="neutral">5.17%</td>
+
+                            <!-- 수급 정보 -->
+                            <td class="positive">176.1</td>
+                            <td class="positive">208.3</td>
+                            <td class="volume">86,516</td>
+                            <td class="volume">102,376</td>
+                        </tr>
+
+                        <tr>
+                            <td class="rank">5</td>
+                            <td class="stock-name">LG이노텍</td>
+                            <td class="stock-code">011070</td>
+
+                            <!-- 가격 정보 -->
+                            <td class="price">241,000</td>
+                            <td class="price">233,000</td>
+                            <td class="price">121,000</td>
+                            <td class="positive">99.2%</td>
+                            <td class="positive">2.5배</td>
+
+                            <!-- 거래대금 정보 -->
+                            <td class="volume">993.9억</td>
+                            <td class="volume">405.1억</td>
+                            <td class="volume">57,038억</td>
+                            <td class="neutral">1.74%</td>
+
+                            <!-- 수급 정보 -->
+                            <td class="positive">261.4</td>
+                            <td class="positive">51.1</td>
+                            <td class="volume">108,445</td>
+                            <td class="volume">21,197</td>
+                        </tr>
+
+                        <tr>
+                            <td class="rank">6</td>
+                            <td class="stock-name">가온전선</td>
+                            <td class="stock-code">000500</td>
+
+                            <!-- 가격 정보 -->
+                            <td class="price">84,000</td>
+                            <td class="price">83,800</td>
+                            <td class="price">33,300</td>
+                            <td class="positive">152.2%</td>
+                            <td class="positive">6.0배</td>
+
+                            <!-- 거래대금 정보 -->
+                            <td class="volume">459.4억</td>
+                            <td class="volume">77.1억</td>
+                            <td class="volume">13,896억</td>
+                            <td class="neutral">3.31%</td>
+
+                            <!-- 수급 정보 -->
+                            <td class="positive">78.1</td>
+                            <td class="positive">69.6</td>
+                            <td class="volume">92,937</td>
+                            <td class="volume">82,880</td>
+                        </tr>
+
+                        <tr>
+                            <td class="rank">7</td>
+                            <td class="stock-name">현대차2우B</td>
+                            <td class="stock-code">005387</td>
+
+                            <!-- 가격 정보 -->
+                            <td class="price">220,000</td>
+                            <td class="price">216,500</td>
+                            <td class="price">133,300</td>
+                            <td class="positive">65.0%</td>
+                            <td class="positive">2.5배</td>
+
+                            <!-- 거래대금 정보 -->
+                            <td class="volume">868.2억</td>
+                            <td class="volume">342.2억</td>
+                            <td class="volume">76,921억</td>
+                            <td class="neutral">1.13%</td>
+
+                            <!-- 수급 정보 -->
+                            <td class="positive">94.2</td>
+                            <td class="positive">1.9</td>
+                            <td class="volume">42,842</td>
+                            <td class="volume">848</td>
+                        </tr>
+
+                        <tr>
+                            <td class="rank">8</td>
+                            <td class="stock-name">티로보틱스</td>
+                            <td class="stock-code">117730</td>
+
+                            <!-- 가격 정보 -->
+                            <td class="price">18,420</td>
+                            <td class="price">17,300</td>
+                            <td class="price">6,240</td>
+                            <td class="positive">195.2%</td>
+                            <td class="positive">3.0배</td>
+
+                            <!-- 거래대금 정보 -->
+                            <td class="volume">971.4억</td>
+                            <td class="volume">327.6억</td>
+                            <td class="volume">3,693억</td>
+                            <td class="positive">26.30%</td>
+
+                            <!-- 수급 정보 -->
+                            <td class="negative">-1.8</td>
+                            <td class="positive">39.7</td>
+                            <td class="volume">-9,987</td>
+                            <td class="volume">215,532</td>
+                        </tr>
+
+                        <tr>
+                            <td class="rank">9</td>
+                            <td class="stock-name">현대차우</td>
+                            <td class="stock-code">005385</td>
+
+                            <!-- 가격 정보 -->
+                            <td class="price">217,000</td>
+                            <td class="price">211,000</td>
+                            <td class="price">132,000</td>
+                            <td class="positive">64.4%</td>
+                            <td class="positive">2.3배</td>
+
+                            <!-- 거래대금 정보 -->
+                            <td class="volume">605.1억</td>
+                            <td class="volume">264.8억</td>
+                            <td class="volume">50,650억</td>
+                            <td class="neutral">1.19%</td>
+
+                            <!-- 수급 정보 -->
+                            <td class="negative">-3.6</td>
+                            <td class="positive">27.7</td>
+                            <td class="volume">-1,653</td>
+                            <td class="volume">12,765</td>
+                        </tr>
+
+                        <tr>
+                            <td class="rank">10</td>
+                            <td class="stock-name">미래에셋비전스팩4호</td>
+                            <td class="stock-code">477380</td>
+
+                            <!-- 가격 정보 -->
+                            <td class="price">2,095</td>
+                            <td class="price">2,075</td>
+                            <td class="price">1,942</td>
+                            <td class="positive">7.9%</td>
+                            <td class="positive">2.0배</td>
+
+                            <!-- 거래대금 정보 -->
+                            <td class="volume">0.4억</td>
+                            <td class="volume">0.2억</td>
+                            <td class="volume">170억</td>
+                            <td class="neutral">0.24%</td>
+
+                            <!-- 수급 정보 -->
+                            <td class="positive">0.3</td>
+                            <td class="neutral">0.0</td>
+                            <td class="volume">14,532</td>
+                            <td class="volume">23</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Generated by Advanced Stock Screener</strong></p>
+            <p>생성 시간: 2025-11-02 19:11:18</p>
+            <p style="margin-top: 10px; font-size: 0.85em; opacity: 0.8;">
+                ⚠️ 이 정보는 투자 참고용이며, 투자 결과에 대한 책임은 투자자 본인에게 있습니다.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
